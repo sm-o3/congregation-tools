@@ -2,6 +2,16 @@
 
 Production-ready Single Page Admin Dashboard built with Vue 3, Vuetify, and Firebase.
 
+## ⚡ 1-Click Installation (Windows, macOS, Linux)
+
+Any new congregation can set up and run this application with one click:
+
+- **Windows**: Double-click `setup-windows.bat` (to install) and `start-windows.bat` (to launch).
+- **macOS**: Double-click `setup-mac.command` (to install) and `start-mac.command` (to launch).
+- **Linux**: Run `./setup-unix.sh` and `./start-unix.sh`.
+
+👉 **For a step-by-step 5-minute setup guide, see [NEW_CONGREGATION_GUIDE.md](NEW_CONGREGATION_GUIDE.md).**
+
 ## Features
 
 - **Authentication**: Google Sign-In with Firebase Authentication

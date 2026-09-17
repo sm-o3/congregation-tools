@@ -1,177 +1,105 @@
-# 🎉 Deployment Successful!
+# 🎉 Deployment & Setup Guide
 
-Your Congregation Tools Admin Dashboard is now live!
+Your Congregation Tools Admin Dashboard is ready to deploy and configure!
 
-## 🌐 Your Application URLs
+## 🌐 Application URLs
 
-- **Live App**: https://cong-tools.web.app
-- **Firebase Console**: https://console.firebase.google.com/project/cong-tools/overview
+- **Live App**: `https://<YOUR-PROJECT-ID>.web.app` (or your custom domain)
+- **Firebase Console**: `https://console.firebase.google.com/project/<YOUR-PROJECT-ID>/overview`
 
 ---
 
-## ⚠️ IMPORTANT: Add Admin User Before First Login
+## ⚠️ Initial Setup: Add Admin User Before First Login
 
-You need to add yourself as an admin user to access the application. Follow these steps:
+You need to add yourself as an admin user to access the application for the first time. Follow these quick steps:
 
 ### Step 1: Try to Login (You'll Get "Access Denied")
 
-1. Go to: https://cong-tools.web.app
+1. Go to your application URL: `https://<YOUR-PROJECT-ID>.web.app` (or `http://localhost:5173` locally)
 2. Click **"Sign in with Google"**
 3. Sign in with your Google account
-4. You'll see **"Access denied"** - this is expected! ✅
+4. You will see **"Access denied"** - this is expected security behavior! ✅
 
 ### Step 2: Get Your Firebase Auth UID
 
-1. Go to [Firebase Console](https://console.firebase.google.com/project/cong-tools/overview)
+1. Go to [Firebase Console](https://console.firebase.google.com) and open your project
 2. Click **Authentication** in the left sidebar
 3. Click the **Users** tab
-4. You should see your email address listed
-5. **Copy your User UID** (the long string in the "User UID" column)
+4. You will see your Google email address listed
+5. **Copy your User UID** (the long alphanumeric string in the "User UID" column)
    - Example: `abc123xyz456def789...`
 
 ### Step 3: Add Yourself to Firestore
 
 1. In Firebase Console, click **Firestore Database** in the left sidebar
-2. Click **+ Start collection**
+2. Click **+ Start collection** (if not created yet)
 3. Collection ID: `users`
 4. Click **Next**
-5. Document ID: **Paste your UID from Step 2**
-6. Click **Add field** and add these 4 fields:
+5. Document ID: **Paste your copied User UID from Step 2**
+6. Click **Add field** and add these 5 fields:
 
 | Field name | Type | Value |
 |------------|------|-------|
-| `email` | string | your-email@gmail.com (your actual email) |
-| `displayName` | string | Your Name (your actual name) |
+| `email` | string | `your-email@gmail.com` (your actual email) |
+| `displayName` | string | `Your Name` (your actual name) |
 | `role` | string | `admin` |
+| `spiritualRole` | string | `Elder` |
 | `createdAt` | timestamp | Click the timestamp icon to insert current time |
 
 7. Click **Save**
 
 ### Step 4: Login Successfully! ✅
 
-1. Go back to: https://cong-tools.web.app
+1. Return to your application URL
 2. Refresh the page
-3. Click **"Sign in with Google"** again
-4. You should now have full admin access! 🎉
+3. Click **"Sign in with Google"**
+4. You now have full admin access! 🎉
 
 ---
 
-## 📱 What You Can Do Now
+## 📱 Core Features & Modules
 
-Once logged in as admin, you have full access to:
+Once logged in as an administrator, you have access to:
 
-✅ **Dashboard** - View statistics and quick actions  
-✅ **Database** - Manage publishers and groups  
-✅ **Reports** - Add and view field service reports  
-✅ **Schedule** - Manage public talks and other schedules  
-✅ **Profile** - Edit your profile information  
-
----
-
-## 👥 Adding More Users
-
-To add additional users (admin or editor):
-
-1. Have them sign in once at https://cong-tools.web.app
-2. They'll get "Access denied" - this is normal
-3. Go to Firebase Console > Authentication > Users
-4. Find their email and copy their UID
-5. Go to Firestore Database > `users` collection
-6. Click **Add document**
-7. Document ID: Their UID
-8. Add fields: `email`, `displayName`, `role` (either `admin` or `editor`), `createdAt`
-
-### Role Permissions
-
-- **admin**: Full access - can create, edit, and delete all data
-- **editor**: Limited access - can read all data, create reports/schedules, but cannot delete
+- ✅ **Dashboard** - Congregation publisher statistics and quick shortcuts
+- ✅ **Congregation Database** - Publishers list, emergency contacts, field service groups, and group sort orders
+- ✅ **Reports** - Monthly field service report submission, reports analysis, S-21 publisher records, meeting attendance
+- ✅ **Schedule** - Public talks schedule, OCLM workbooks, Kingdom Hall cleaning, sound/mic assignments
+- ✅ **Territory Management** - Territory overview, territory list, S-13 territory assignment records
+- ✅ **Admin Settings** - User management, role appointments (COBE, Secretary, Service Overseer), and congregation configuration
 
 ---
 
-## 🔧 Local Development
+## 👥 Adding More Users & Congregation Service Committee
 
-To run the app locally:
+1. Ask new users to click **Sign in with Google** once on the app (they will see Access Denied).
+2. As Admin, navigate to **Settings > Manage Users** tab inside the app to assign their Role (`admin`, `editor`, `viewer`) and Spiritual Role (`Elder`, `Ministerial Servant`, `Publisher`).
+3. Set the **Congregation Service Committee** in **Settings > Congregation Appointments**:
+   - **Coordinator of the Body of Elders (COBE)**
+   - **Secretary**
+   - **Service Overseer**
+   *(Note: Record deletion permissions are strictly reserved for the Service Committee).*
 
+---
+
+## 🔧 Local Development & Updating
+
+Run with 1-click using the provided startup scripts:
+- **Windows**: Double-click `start-windows.bat`
+- **Mac**: Double-click `start-mac.command`
+- **Linux**: Run `./start-unix.sh`
+
+Or manually via terminal:
 ```bash
-# Navigate to project directory
-cd c:\Users\Sam\OneDrive\Documents\Projects\Software\Cong-Tools
+# Install dependencies
+npm install
 
-# Start development server
+# Start local development server (http://localhost:5173)
 npm run dev
 
-# Access at http://localhost:5173
-```
-
----
-
-## 🚀 Deploying Updates
-
-After making changes to your code:
-
-```bash
-# Build the app
+# Build for production
 npm run build
 
-# Deploy to Firebase
-firebase deploy
+# Deploy to Firebase Hosting
+npx firebase-tools deploy --only hosting
 ```
-
-Or deploy only hosting:
-```bash
-firebase deploy --only hosting
-```
-
-Or deploy only Firestore rules:
-```bash
-firebase deploy --only firestore:rules
-```
-
----
-
-## 📊 Firebase Services Deployed
-
-✅ **Firestore Database** - Security rules deployed  
-✅ **Firebase Hosting** - App deployed to https://cong-tools.web.app  
-✅ **Authentication** - Google Sign-In enabled  
-
----
-
-## 🆘 Troubleshooting
-
-### "Access denied" after adding user to Firestore
-- Make sure the document ID in Firestore matches your Firebase Auth UID exactly
-- Check that the `role` field is set to `admin` or `editor`
-- Try signing out and signing in again
-
-### Can't see my changes after deploying
-- Clear your browser cache
-- Try opening in incognito/private mode
-- Wait a few minutes for CDN to update
-
-### Firestore permission errors
-- Check that security rules are deployed: `firebase deploy --only firestore:rules`
-- Verify your user document exists in the `users` collection
-
----
-
-## 📚 Next Steps
-
-1. ✅ Add yourself as admin user (follow steps above)
-2. ✅ Login and test the application
-3. Add publishers to the database
-4. Create field service groups
-5. Start adding reports
-6. Manage schedules
-
----
-
-## 🎯 Quick Links
-
-- **Live App**: https://cong-tools.web.app
-- **Firebase Console**: https://console.firebase.google.com/project/cong-tools
-- **Authentication Users**: https://console.firebase.google.com/project/cong-tools/authentication/users
-- **Firestore Database**: https://console.firebase.google.com/project/cong-tools/firestore
-
----
-
-**Congratulations! Your admin dashboard is live and ready to use!** 🎉
