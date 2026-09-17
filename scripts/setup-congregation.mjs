@@ -113,9 +113,19 @@ function getFirebaseCliToken() {
                 return data.tokens.access_token;
             }
         }
-    } catch (e) {
-        // Ignore
-    }
+    } catch (e) {}
+    return null;
+}
+
+// Retrieve Firebase CLI logged-in user email
+function getFirebaseCliUser() {
+    try {
+        const configPath = path.join(os.homedir(), '.config', 'configstore', 'firebase-tools.json');
+        if (fs.existsSync(configPath)) {
+            const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            return data?.user?.email || data?.tokens?.email || null;
+        }
+    } catch (e) {}
     return null;
 }
 
@@ -154,6 +164,59 @@ function getProjectSdkConfig(projectId) {
     return null;
 }
 
+// Read multi-line pasted snippet cleanly from terminal
+function promptMultiLineSnippet(rl) {
+    log('\nPaste your entire "const firebaseConfig = { ... };" snippet below:', colors.cyan);
+    log('(After pasting, press ENTER if not automatically detected, or type "done"):', colors.dim);
+    console.log('');
+
+    return new Promise((resolve) => {
+        let lines = [];
+        let timer = null;
+
+        const handleLine = (line) => {
+            const trimmed = line.trim();
+
+            if (trimmed === 'done') {
+                finish();
+                return;
+            }
+
+            lines.push(line);
+            const fullText = lines.join('\n');
+
+            // If empty first line, user just pressed enter to skip
+            if (lines.length === 1 && trimmed === '') {
+                finish();
+                return;
+            }
+
+            if (timer) clearTimeout(timer);
+
+            // If closing brace or full config found
+            const hasClosing = fullText.includes('};') || (fullText.includes('{') && fullText.includes('}') && fullText.includes('apiKey'));
+            if (hasClosing) {
+                timer = setTimeout(() => {
+                    finish();
+                }, 80);
+            } else {
+                // Settle timer for multi-line paste buffer
+                timer = setTimeout(() => {
+                    finish();
+                }, 350);
+            }
+        };
+
+        const finish = () => {
+            if (timer) clearTimeout(timer);
+            rl.off('line', handleLine);
+            resolve(lines.join('\n'));
+        };
+
+        rl.on('line', handleLine);
+    });
+}
+
 async function main() {
     const rl = readline.createInterface({ input, output });
 
@@ -167,9 +230,20 @@ async function main() {
     header('Step 1: Firebase Project & CLI Login');
     log('Congregation Tools uses Google Firebase for Database, Authentication, and Hosting.', colors.white);
 
+    let cliEmail = getFirebaseCliUser();
     let hasCliToken = getFirebaseCliToken();
 
-    if (!hasCliToken) {
+    if (hasCliToken && cliEmail) {
+        log(`\n[OK] Logged in to Firebase CLI as: ${cliEmail}`, colors.green);
+        const switchAns = await rl.question(`${colors.bright}Is "${cliEmail}" the Google account that owns your Firebase project? [Y/n]: ${colors.reset}`);
+        if (switchAns.trim().toLowerCase().startsWith('n')) {
+            log('\nSwitching Firebase account...', colors.cyan);
+            runCommand('npx -y firebase-tools logout');
+            runCommand('npx -y firebase-tools login');
+            cliEmail = getFirebaseCliUser();
+            hasCliToken = getFirebaseCliToken();
+        }
+    } else {
         log('\nLogging in with Firebase CLI allows this wizard to automatically configure everything for you.', colors.yellow);
         const loginAns = await rl.question(`${colors.bright}Would you like to log in with Firebase CLI now? (Recommended) [Y/n]: ${colors.reset}`);
         const shouldLogin = !loginAns.trim() || loginAns.trim().toLowerCase().startsWith('y');
@@ -177,16 +251,15 @@ async function main() {
         if (shouldLogin) {
             log('\nOpening Firebase login in your browser...', colors.cyan);
             runCommand('npx -y firebase-tools login');
+            cliEmail = getFirebaseCliUser();
             hasCliToken = getFirebaseCliToken();
         }
-    } else {
-        log('[OK] Firebase CLI authentication detected.', colors.green);
     }
 
     // -------------------------------------------------------------
     // STEP 2: Project Selection & Configuration
     // -------------------------------------------------------------
-    header('Step 2: Select or Create Firebase Project');
+    header('Step 2: Select or Connect Firebase Project');
 
     let selectedProjectId = '';
     let firebaseConfig = null;
@@ -201,10 +274,10 @@ async function main() {
                 const label = p.displayName ? `${p.displayName} (${p.projectId})` : p.projectId;
                 log(`  [${idx + 1}] ${label}`, colors.white);
             });
-            log(`  [N] Create a NEW Firebase project for this congregation`, colors.yellow);
+            log(`  [N] Enter another Project ID or create a new one`, colors.yellow);
             console.log('');
 
-            const choice = (await rl.question(`${colors.bright}Select a project number or enter 'N' for new [1]: ${colors.reset}`)).trim();
+            const choice = (await rl.question(`${colors.bright}Select a project number or enter 'N' [1]: ${colors.reset}`)).trim();
             
             if (!choice || !isNaN(choice)) {
                 const idx = choice ? parseInt(choice, 10) - 1 : 0;
@@ -216,46 +289,30 @@ async function main() {
         }
     }
 
-    // If user wants to create a new project or has no projects yet
+    // If user wants to enter project ID or create new project
     if (!selectedProjectId) {
         log('\nEvery congregation needs a Firebase Project.', colors.bright);
         log('Creating a project is 100% FREE on the Spark plan.', colors.white);
         console.log('');
-        log('1. Create project via Firebase Console in browser (Recommended - takes 30 seconds)', colors.cyan);
-        log('2. Attempt creation via command line', colors.white);
-        log('3. I already know my Project ID', colors.white);
+        log('1. I already created a project (Enter Project ID)', colors.cyan);
+        log('2. Open Firebase Console in browser to create one (Takes 30 seconds)', colors.white);
         console.log('');
 
         const createChoice = (await rl.question(`Choose an option [1]: `)).trim();
 
         if (createChoice === '2') {
-            const desiredId = (await rl.question(`Enter unique project ID (e.g. city-cong-tools): `)).trim();
-            const displayName = (await rl.question(`Enter project display name (e.g. City Congregation): `)).trim() || desiredId;
-            log(`\nAttempting to create project "${desiredId}" via Firebase CLI...`, colors.cyan);
-            const created = runCommand(`npx -y firebase-tools projects:create ${desiredId} --display-name "${displayName}"`);
-            if (created !== null) {
-                selectedProjectId = desiredId;
-                log(`[OK] Project created successfully!`, colors.green);
-            } else {
-                log(`\n[!] Automatic CLI creation did not succeed (Google often requires console terms).`, colors.yellow);
-            }
-        }
-
-        if (!selectedProjectId && createChoice !== '3') {
             log('\nOpening Firebase Console in your browser...', colors.cyan);
             log('👉 1. Click "Add project" (or "Create a project")', colors.white);
-            log('👉 2. Enter your Congregation Name (e.g. "Central Congregation")', colors.white);
+            log('👉 2. Enter your Congregation Name (e.g. "Chettipalayam Congregation")', colors.white);
             log('👉 3. Click "Continue" -> "Create project"\n', colors.white);
             openUrl('https://console.firebase.google.com/');
+        }
 
-            while (!selectedProjectId) {
-                const entered = (await rl.question(`${colors.bright}Enter the Project ID you just created in the console: ${colors.reset}`)).trim();
-                if (entered) {
-                    selectedProjectId = entered;
-                }
+        while (!selectedProjectId) {
+            const entered = (await rl.question(`${colors.bright}Enter your Firebase Project ID (e.g. chettipalayam-8539): ${colors.reset}`)).trim();
+            if (entered) {
+                selectedProjectId = entered;
             }
-        } else if (!selectedProjectId) {
-            selectedProjectId = (await rl.question(`${colors.bright}Enter your Firebase Project ID: ${colors.reset}`)).trim();
         }
     }
 
@@ -275,18 +332,20 @@ async function main() {
         log(`2. Under "Your apps", click the Web icon (</>) and register your app.`, colors.white);
         log(`3. Copy the "firebaseConfig" snippet.\n`, colors.white);
 
-        const snippet = await rl.question(`${colors.bright}Paste your firebaseConfig snippet (or press ENTER to type API key): ${colors.reset}`);
+        const snippet = await promptMultiLineSnippet(rl);
         const parsed = parseFirebaseConfigSnippet(snippet);
 
         if (parsed && parsed.apiKey) {
             firebaseConfig = parsed;
             if (!firebaseConfig.projectId) firebaseConfig.projectId = selectedProjectId;
+            log(`[OK] Successfully parsed configuration for "${firebaseConfig.projectId}"!`, colors.green);
             break;
         }
 
+        log(`\nCould not automatically parse the full snippet. Let's enter keys:`, colors.yellow);
         const apiKey = (await rl.question(`Firebase API Key (apiKey): `)).trim();
-        if (!apiKey) {
-            log(`[ERROR] API Key is required. Please paste your config snippet or API key.`, colors.red);
+        if (!apiKey || apiKey === '};' || apiKey === '}') {
+            log(`[ERROR] Valid API Key is required. Please copy the "apiKey" from Firebase Console.`, colors.red);
             continue;
         }
 
@@ -338,6 +397,9 @@ async function main() {
     log(`1. Google Sign-In:   https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/providers`, colors.cyan);
     log(`2. Firestore DB:     https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`, colors.cyan);
     console.log('');
+    log('⚠️  IMPORTANT: In your browser, open the Firestore DB link above and click', colors.yellow);
+    log('   "Create database" (choose Production mode). Google requires the database to be', colors.yellow);
+    log('   created in the console before rules can be deployed.\n', colors.yellow);
 
     const openLinksAns = await rl.question(`${colors.bright}Open these two pages in your browser now? [Y/n]: ${colors.reset}`);
     if (!openLinksAns.trim() || openLinksAns.trim().toLowerCase().startsWith('y')) {
@@ -345,14 +407,17 @@ async function main() {
         openUrl(`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`);
     }
 
-    const deployRulesAns = await rl.question(`\n${colors.bright}Have you created the Firestore Database? Deploy firestore.rules now? [Y/n]: ${colors.reset}`);
+    const deployRulesAns = await rl.question(`\n${colors.bright}Have you clicked "Create database" in Firestore? Deploy firestore.rules now? [Y/n]: ${colors.reset}`);
     if (!deployRulesAns.trim() || deployRulesAns.trim().toLowerCase().startsWith('y')) {
         log(`Deploying Firestore security rules to "${firebaseConfig.projectId}"...`, colors.cyan);
         const rulesRes = runCommand(`npx -y firebase-tools deploy --only firestore:rules --project ${firebaseConfig.projectId}`);
         if (rulesRes !== null) {
             log(`[OK] Firestore security rules deployed!`, colors.green);
         } else {
-            log(`[!] Note: If Firestore DB has not been created yet in the console, create it first, then run "npx firebase deploy --only firestore:rules".`, colors.yellow);
+            log(`\n[!] Note: If Firestore rules deployment showed 403 or failed:`, colors.yellow);
+            log(`    1. Ensure you clicked "Create database" in Firebase Console.`, colors.white);
+            log(`    2. Ensure your Firebase CLI account has Owner access to "${firebaseConfig.projectId}".`, colors.white);
+            log(`    You can deploy rules anytime later with: npx firebase deploy --only firestore:rules\n`, colors.dim);
         }
     }
 
