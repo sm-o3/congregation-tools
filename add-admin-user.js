@@ -1,59 +1,106 @@
 // Script to add initial admin user to Firestore
-// Run this with: node add-admin-user.js
+// Run this with: npm run add-admin or node add-admin-user.js
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import readline from 'readline/promises';
+import { stdin as input, stdout as output } from 'process';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Read .env if available
+function loadEnv() {
+    const envPath = path.resolve(__dirname, '.env');
+    const env = {};
+    if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf8');
+        content.split('\n').forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+                const [key, ...vals] = trimmed.split('=');
+                env[key.trim()] = vals.join('=').trim();
+            }
+        });
+    }
+    return env;
+}
+
+const env = loadEnv();
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCEXowpoZl9FCY4puAFASNPahuuf0ezP5Q",
-    authDomain: "cong-tools.firebaseapp.com",
-    projectId: "cong-tools",
-    storageBucket: "cong-tools.firebasestorage.app",
-    messagingSenderId: "950697752839",
-    appId: "1:950697752839:web:d6ed7c80abe97d9d27ada2"
+    apiKey: env.VITE_FIREBASE_API_KEY || process.env.VITE_FIREBASE_API_KEY,
+    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: env.VITE_FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: env.VITE_FIREBASE_APP_ID || process.env.VITE_FIREBASE_APP_ID
 };
+
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+    console.error('❌ Error: Firebase configuration not found in .env file.');
+    console.error('Please run "npm run setup:congregation" or configure .env first.');
+    process.exit(1);
+}
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 async function addAdminUser() {
+    const rl = readline.createInterface({ input, output });
+
+    console.log('\n========================================================');
+    console.log('       Appoint Initial Congregation Admin User          ');
+    console.log('========================================================\n');
+
     try {
-        // IMPORTANT: Replace these values with your actual information
+        const email = (await rl.question('Admin Google Account Email (e.g. brother@gmail.com): ')).trim();
+        if (!email) {
+            console.error('Email is required.');
+            process.exit(1);
+        }
+
+        const displayName = (await rl.question('Admin Full Name: ')).trim() || 'Admin User';
+        
+        console.log('\nSpiritual Role:');
+        console.log('1. Elder (Default)');
+        console.log('2. Ministerial Servant');
+        console.log('3. Publisher');
+        const roleChoice = (await rl.question('Select Spiritual Role [1]: ')).trim();
+        const spiritualRole = roleChoice === '2' ? 'Ministerial Servant' : roleChoice === '3' ? 'Publisher' : 'Elder';
+
+        rl.close();
+
         const adminUser = {
-            // You'll get the UID after your first login attempt
-            // For now, we'll use your email as the document ID
-            email: "sundar6445@gmail.com", // REPLACE THIS
-            displayName: "Sam Sundar", // REPLACE THIS
-            role: "admin",
+            email: email.toLowerCase().trim(),
+            displayName: displayName,
+            role: 'admin',
+            spiritualRole: spiritualRole,
             createdAt: serverTimestamp()
         };
 
-        console.log('⚠️  IMPORTANT: You need to update this script with your information:');
-        console.log('1. Replace "your-email@gmail.com" with your actual Gmail address');
-        console.log('2. Replace "Your Name" with your actual name');
-        console.log('3. After first login, get your Firebase Auth UID and update the document ID');
-        console.log('\nFor now, this script will create a placeholder document.');
-        console.log('After your first login attempt, you can find your UID in the Firebase Console:');
-        console.log('Authentication > Users tab\n');
-
-        // Create a temporary document - you'll need to update the document ID with your UID later
-        const userRef = doc(db, 'users', 'TEMP_REPLACE_WITH_YOUR_UID');
+        // Create document using sanitized email as document key
+        const docId = email.toLowerCase().trim();
+        const userRef = doc(db, 'users', docId);
         await setDoc(userRef, adminUser);
 
-        console.log('✅ Placeholder admin user document created!');
-        console.log('\nNext steps:');
-        console.log('1. Try to login to your app with your Google account');
-        console.log('2. You will see "Access denied" - this is expected');
-        console.log('3. Go to Firebase Console > Authentication > Users');
-        console.log('4. Copy your User UID');
-        console.log('5. Go to Firestore Database > users collection');
-        console.log('6. Delete the TEMP document and create a new one with your UID as the document ID');
-        console.log('7. Add the same fields: email, displayName, role: "admin", createdAt');
+        console.log('\n✅ Success! Admin user document created in Firestore:');
+        console.log(`- Email: ${email}`);
+        console.log(`- Name: ${displayName}`);
+        console.log(`- Role: admin`);
+        console.log(`- Spiritual Role: ${spiritualRole}`);
+        console.log('\nWhen signing in via Google, Congregation Tools will automatically');
+        console.log('link your account and grant full administrative access!\n');
 
         process.exit(0);
     } catch (error) {
-        console.error('❌ Error adding admin user:', error);
+        console.error('❌ Error creating admin user in Firestore:', error.message);
+        console.log('\nIf permission was denied, ensure you have enabled Firestore');
+        console.log('or add the user via Firebase Console > Firestore Database > users collection.');
         process.exit(1);
     }
 }

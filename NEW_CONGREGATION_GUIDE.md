@@ -1,91 +1,85 @@
 # 🏛️ New Congregation Setup & Installation Guide
 
-This guide walks you through setting up **Congregation Tools** for a new congregation in under 10 minutes.
+This guide walks you through setting up **Congregation Tools** for a new congregation in under 5 minutes.
 
 ---
 
-## ⚡ Method 1: Instant 1-Line URL Installation (Recommended)
-
-No manual downloading or git commands needed! Just open your terminal or PowerShell and paste the command below:
+## ⚡ Step 0: Get Congregation Tools (Choose 1 Option)
 
 ### 🪟 Windows (Open PowerShell):
 ```powershell
 irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.ps1 | iex
 ```
-*What this does automatically:*
-1. Checks for Node.js (offers to install if missing).
-2. Clones or downloads Congregation Tools.
-3. Creates a **"Congregation Tools" shortcut on your Desktop**.
-4. Installs all required packages (`npm install`).
-5. Launches the app in your browser at `http://localhost:5173`.
+*(Automatically checks Node.js, downloads the app, creates desktop shortcut, installs dependencies, and launches the setup wizard).*
 
 ### 🍎 macOS & 🐧 Linux (Open Terminal):
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.sh | bash
 ```
 
----
-
-## 🖱️ Method 2: Double-Click Local Launchers
-
-If you have downloaded and extracted this project folder, just double-click:
-
-- **Windows**: Double-click `start-windows.bat` (runs initial setup automatically on first launch).
-- **macOS**: Double-click `start-mac.command` in Finder.
-- **Linux**: Run `./start-unix.sh`.
-
-*(Ensure you have [Node.js](https://nodejs.org/) LTS installed).*
+### 🖱️ Or Double-Click Local Launchers:
+If you downloaded the ZIP or cloned the repo:
+- **Windows**: Double-click `setup-windows.bat`
+- **macOS**: Double-click `setup-mac.command`
+- **Linux**: Run `./setup-unix.sh`
 
 ---
 
-## ☁️ Step 1: Create a Free Firebase Project
+## 🤖 Automated Terminal Setup Wizard (Steps 1 – 5 in Terminal)
 
-Congregation Tools runs on Google Firebase (Authentication, Firestore Database, and Hosting) completely free for standard congregation usage.
+You can automate Steps 1 through 5 completely in the terminal with our interactive setup wizard:
 
+```bash
+npm run setup
+```
+
+### What the wizard automates with simple terminal prompts:
+1. **Step 1: Firebase Project & Login**  
+   - Runs `npx firebase-tools login` to authenticate with your Google account.
+   - Lets you choose your Firebase project or provide its ID.
+
+2. **Step 2: Automated Configuration (`.env` & `.firebaserc`)**  
+   - Automatically retrieves your Web App configuration keys via Firebase CLI.
+   - Automatically generates `.env` and `.firebaserc` without manual file editing!
+
+3. **Step 3: Enable Services & Deploy Firestore Rules**  
+   - Automatically publishes `firestore.rules` directly to your Firebase database.
+   - Provides direct links to toggle Google Sign-In and Firestore Database.
+
+4. **Step 4: Appoint Initial Admin User**  
+   - Prompts for the Congregation Admin / Elder's Google email and display name.
+   - Automatically provisions the Admin role in Firestore.
+   - When the elder clicks **"Sign in with Google"**, full administrator access is granted immediately.
+
+5. **Step 5: Deploy to Web & Launch**  
+   - Prompts to build and deploy to Firebase Hosting (`https://<project-id>.web.app`).
+   - Automatically launches the local development server at `http://localhost:5173`.
+
+---
+
+## 📖 Manual Reference (Optional)
+
+If you prefer configuring Firebase manually through the web browser console instead of the automated wizard:
+
+### Step 1: Create a Free Firebase Project
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and sign in with your Google account.
-2. Click **"Add project"** (or "Create a project").
-3. Enter your Congregation's project name (e.g., `central-cong-tools`) and follow the on-screen steps.
-4. Google Analytics can be enabled or disabled as preferred. Click **Create project**.
+2. Click **"Add project"**, enter your congregation project name (e.g., `central-cong-tools`), and click **Create project**.
 
----
+### Step 2: Enable Firebase Services
+1. **Google Authentication**:
+   - Go to **Build > Authentication > Sign-in method**.
+   - Select **Google**, toggle **Enable**, pick your support email, and click **Save**.
+2. **Cloud Firestore Database**:
+   - Go to **Build > Firestore Database > Create database**.
+   - Choose **Production mode** and click **Create**.
+   - Under **Rules**, paste the contents of `firestore.rules` and click **Publish**.
+3. **Firebase Hosting**:
+   - Go to **Build > Hosting** and click **Get started**.
 
-## 🔑 Step 2: Enable Firebase Services
-
-### 1. Google Authentication
-1. In the left navigation menu of Firebase Console, click **Build > Authentication**.
-2. Click **Get started**, then open the **Sign-in method** tab.
-3. Select **Google**, toggle **Enable**, select your support email, and click **Save**.
-
-### 2. Cloud Firestore Database
-1. In the left menu, click **Build > Firestore Database**.
-2. Click **Create database**.
-3. Choose **Production mode** and select your closest location region.
-4. Click **Create**.
-5. Once created, go to the **Rules** tab and paste the contents of the `firestore.rules` file from this project repository, then click **Publish**.
-
-### 3. Firebase Hosting
-1. In the left menu, click **Build > Hosting**.
-2. Click **Get started** and proceed through the initial prompt.
-
----
-
-## ⚙️ Step 3: Connect Your Project Configuration
-
-1. In Firebase Console, click the **Settings gear icon (⚙️)** in the top left next to *Project Overview* &rarr; select **Project settings**.
-2. Scroll down to the **"Your apps"** section and click the **Web icon (`</>`)**.
-3. Register your app with a nickname (e.g., `Congregation Web App`).
-4. Firebase will present your `firebaseConfig` object:
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "AIzaSy...",
-     authDomain: "your-cong-project.firebaseapp.com",
-     projectId: "your-cong-project",
-     storageBucket: "your-cong-project.firebasestorage.app",
-     messagingSenderId: "123456789...",
-     appId: "1:123456789:web:..."
-   };
-   ```
-5. In your project folder, copy `.env.example` to `.env` and fill in your values:
+### Step 3: Connect Project Configuration
+1. In Firebase Console, click the **Settings gear (⚙️) > Project settings**.
+2. Under "Your apps", click the **Web icon (`</>`)** and register your app.
+3. Copy `.env.example` to `.env` and fill in your values:
    ```env
    VITE_FIREBASE_API_KEY=AIzaSy...
    VITE_FIREBASE_AUTH_DOMAIN=your-cong-project.firebaseapp.com
@@ -94,46 +88,21 @@ Congregation Tools runs on Google Firebase (Authentication, Firestore Database, 
    VITE_FIREBASE_MESSAGING_SENDER_ID=123456789...
    VITE_FIREBASE_APP_ID=1:123456789:web:...
    ```
-6. In `.firebaserc`, replace the project ID:
-   ```json
-   {
-     "projects": {
-       "default": "your-cong-project"
-     }
-   }
-   ```
+4. In `.firebaserc`, replace the project ID with your project ID.
 
----
+### Step 4: Create Initial Admin User
+Run the automated script:
+```bash
+npm run add-admin
+```
+Enter the Elder's Google account email and name. The user will be created in Firestore.
 
-## 👤 Step 4: Create the Initial Admin User
+### Step 5: Deploy to the Web
+- **Windows**: Double-click `deploy-windows.bat`
+- **macOS**: Double-click `deploy-mac.command`
+- **Linux**: Run `./deploy-unix.sh`
 
-1. Start your app (`start-windows.bat`, `start-mac.command`, or `./start-unix.sh`).
-2. Click **"Sign in with Google"** with the administrator's Google account.
-3. You will see **"Access denied"** &mdash; *this is expected!*
-4. Go to **Firebase Console > Authentication > Users** tab. Copy your **User UID** column value (e.g., `abc123xyz456...`).
-5. Go to **Firebase Console > Firestore Database**:
-   - Click **+ Start collection**, name it `users`.
-   - **Document ID**: Paste your copied **User UID**.
-   - Add these fields:
-     - `email` (string): your Google email
-     - `displayName` (string): your Name
-     - `role` (string): `admin`
-     - `spiritualRole` (string): `Elder`
-     - `createdAt` (timestamp): current timestamp
-   - Click **Save**.
-6. Return to your app, refresh the page, and sign in again. You now have full Admin access!
-
----
-
-## 🚀 Step 5: Deploy to the Web
-
-When you are ready to publish the app online for your elders and servants:
-- **Windows**: Double-click `deploy-windows.bat`.
-- **macOS**: Double-click `deploy-mac.command`.
-- **Linux**: Run `./deploy-unix.sh`.
-
-Your application will be live at:
-`https://your-cong-project.web.app`
+Your app is live at `https://<your-project-id>.web.app`!
 
 ---
 

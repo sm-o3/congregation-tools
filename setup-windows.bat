@@ -41,11 +41,21 @@ if %errorlevel% neq 0 (
 
 echo.
 echo ========================================================
-echo   [SUCCESS] Setup Completed Successfully!
+echo   [SUCCESS] Dependencies Installed!
 echo ========================================================
 echo.
-echo You can now run:
-echo   - start-windows.bat  : To start local development server
-echo   - deploy-windows.bat : To deploy to Firebase Hosting
-echo.
-pause
+set /p runWizard="Would you like to run the automated Firebase setup wizard now? (Y/N): "
+if /i "%runWizard%"=="Y" (
+    call node scripts\setup-congregation.mjs
+) else (
+    echo.
+    echo You can configure your congregation anytime by running:
+    echo   npm run setup
+    echo.
+    echo To start the app:
+    echo   - start-windows.bat  : Local server (http://localhost:5173)
+    echo   - deploy-windows.bat : Deploy to Firebase Hosting
+    echo.
+    pause
+)
+

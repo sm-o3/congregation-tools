@@ -72,15 +72,21 @@ echo -e "\033[1;32m========================================================\033[
 echo -e "\033[1;32m    [SUCCESS] Congregation Tools is Ready!              \033[0m"
 echo -e "\033[1;32m========================================================\033[0m"
 echo ""
-echo -e "\033[1;36mStarting local development server...\033[0m"
-echo -e "\033[1;36mOpening http://localhost:5173 in your browser...\033[0m"
-echo ""
 
-# Open browser depending on OS
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    open "http://localhost:5173" 2>/dev/null || true
-elif command -v xdg-open >/dev/null 2>&1; then
-    xdg-open "http://localhost:5173" 2>/dev/null || true
+read -p "Would you like to run the automated Firebase setup wizard to configure your congregation now? (Y/n): " runWizard
+if [[ -z "$runWizard" || "$runWizard" =~ ^[Yy]$ ]]; then
+    node scripts/setup-congregation.mjs
+else
+    echo ""
+    echo -e "\033[1;36mStarting local development server...\033[0m"
+    echo -e "\033[1;36mOpening http://localhost:5173 in your browser...\033[0m"
+    echo ""
+
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        open "http://localhost:5173" 2>/dev/null || true
+    elif command -v xdg-open >/dev/null 2>&1; then
+        xdg-open "http://localhost:5173" 2>/dev/null || true
+    fi
+
+    npm run dev
 fi
-
-npm run dev

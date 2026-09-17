@@ -110,9 +110,15 @@ Write-Host "========================================================" -Foregroun
 Write-Host "    [SUCCESS] Congregation Tools is Ready!              " -ForegroundColor Green
 Write-Host "========================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Starting local development server..." -ForegroundColor Cyan
-Write-Host "Opening http://localhost:5173 in your default browser..." -ForegroundColor Cyan
-Write-Host ""
 
-Start-Process "http://localhost:5173"
-npm run dev
+$runWizard = Read-Host "Would you like to run the automated Firebase setup wizard to configure your congregation now? (Y/n)"
+if ([string]::IsNullOrWhiteSpace($runWizard) -or $runWizard.Trim().ToLower().StartsWith("y")) {
+    node scripts\setup-congregation.mjs
+} else {
+    Write-Host ""
+    Write-Host "Starting local development server..." -ForegroundColor Cyan
+    Write-Host "Opening http://localhost:5173 in your default browser..." -ForegroundColor Cyan
+    Write-Host ""
+    Start-Process "http://localhost:5173"
+    npm run dev
+}

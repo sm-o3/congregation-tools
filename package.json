@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "setup": "node scripts/setup-congregation.mjs",
+    "setup:congregation": "node scripts/setup-congregation.mjs",
     "add-admin": "node add-admin-user.js"
   },
   "dependencies": {

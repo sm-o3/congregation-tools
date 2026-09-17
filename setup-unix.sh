@@ -40,10 +40,19 @@ fi
 
 echo ""
 echo "========================================================"
-echo "  [SUCCESS] Setup Completed Successfully!"
+echo "  [SUCCESS] Dependencies Installed!"
 echo "========================================================"
 echo ""
-echo "You can now run:"
-echo "  ./start-unix.sh  : To start local development server"
-echo "  ./deploy-unix.sh : To deploy to Firebase Hosting"
-echo ""
+read -p "Would you like to run the automated Firebase setup wizard now? (Y/N): " runWizard
+if [[ "$runWizard" =~ ^[Yy]$ ]]; then
+    node scripts/setup-congregation.mjs
+else
+    echo ""
+    echo "You can configure your congregation anytime by running:"
+    echo "  npm run setup"
+    echo ""
+    echo "To start the app:"
+    echo "  ./start-unix.sh  : Local server (http://localhost:5173)"
+    echo "  ./deploy-unix.sh : Deploy to Firebase Hosting"
+    echo ""
+fi
