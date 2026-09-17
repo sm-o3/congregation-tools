@@ -1,0 +1,273 @@
+/* ============================
+   Glassmorphism Global Styles
+   ============================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* ============================
+   Glassmorphism Card Styles
+   ============================ */
+
+/* Light theme glass effect */
+.v-theme--light .v-card {
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(16px) saturate(1.8);
+  -webkit-backdrop-filter: blur(16px) saturate(1.8);
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.v-theme--light .v-card:hover {
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Dark theme glass effect */
+.v-theme--dark .v-card {
+  background: rgba(30, 27, 46, 0.7) !important;
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.v-theme--dark .v-card:hover {
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ============================
+   Glass Navigation Drawer
+   ============================ */
+
+.v-theme--light .v-navigation-drawer {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+.v-theme--dark .v-navigation-drawer {
+  background: rgba(15, 13, 26, 0.85) !important;
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ============================
+   Glass App Bar
+   ============================ */
+
+.v-theme--light .v-app-bar {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(1.8);
+  -webkit-backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 1px 20px rgba(0, 0, 0, 0.04) !important;
+}
+
+.v-theme--dark .v-app-bar {
+  background: rgba(15, 13, 26, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 1px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* ============================
+   Glass Dialog / Menu
+   ============================ */
+
+.v-theme--light .v-dialog .v-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(24px) saturate(2);
+  -webkit-backdrop-filter: blur(24px) saturate(2);
+}
+
+.v-theme--dark .v-dialog .v-card {
+  background: rgba(30, 27, 46, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+}
+
+.v-theme--light .v-menu .v-list {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px !important;
+}
+
+.v-theme--dark .v-menu .v-list {
+  background: rgba(30, 27, 46, 0.92) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px !important;
+}
+
+/* ============================
+   Data Table Glass
+   ============================ */
+
+.v-theme--light .v-data-table {
+  background: transparent !important;
+}
+
+.v-theme--dark .v-data-table {
+  background: transparent !important;
+}
+
+.v-theme--light .v-data-table .v-table__wrapper {
+  border-radius: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.v-theme--dark .v-data-table .v-table__wrapper {
+  border-radius: 12px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================
+   Smooth Scrollbar
+   ============================ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* ============================
+   Global Gradient Backgrounds
+   ============================ */
+
+.v-theme--light .v-application {
+  background: linear-gradient(135deg, #EEF2FF 0%, #F0F2F5 30%, #FDF4FF 60%, #F0F9FF 100%) !important;
+  min-height: 100vh;
+}
+
+.v-theme--dark .v-application {
+  background: linear-gradient(135deg, #0F0D1A 0%, #1A1333 40%, #0D1117 100%) !important;
+  min-height: 100vh;
+}
+
+/* ============================
+   Enhanced Typography
+   ============================ */
+
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.text-subtitle-1, .text-subtitle-2 {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* ============================
+   Button Enhancements
+   ============================ */
+
+.v-btn {
+  text-transform: none !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.v-btn:hover {
+  transform: translateY(-1px);
+}
+
+.v-btn--variant-elevated,
+.v-btn--variant-flat {
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* ============================
+   Chip Enhancements
+   ============================ */
+
+.v-chip {
+  font-weight: 600 !important;
+}
+
+/* ============================
+   List Item Hover
+   ============================ */
+
+.v-list-item {
+  border-radius: 10px !important;
+  margin: 2px 4px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* ============================
+   Input Fields
+   ============================ */
+
+.v-field {
+  transition: all 0.2s ease !important;
+}
+
+.v-field--focused {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* ============================
+   Page Transitions
+   ============================ */
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ============================
+   Expansion Panel Glass
+   ============================ */
+
+.v-theme--light .v-expansion-panel {
+  background: rgba(255, 255, 255, 0.5) !important;
+}
+
+.v-theme--dark .v-expansion-panel {
+  background: rgba(30, 27, 46, 0.5) !important;
+}

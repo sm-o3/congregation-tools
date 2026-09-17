@@ -1,0 +1,29 @@
+{
+  "name": "cong-tools",
+  "private": true,
+  "version": "1.0.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "add-admin": "node add-admin-user.js"
+  },
+  "dependencies": {
+    "@mdi/font": "^7.4.47",
+    "file-saver": "^2.0.5",
+    "firebase": "^11.1.0",
+    "jszip": "^3.10.1",
+    "pdf-lib": "^1.17.1",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
+    "vuetify": "^3.7.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "vite": "^6.0.5",
+    "vite-plugin-vuetify": "^2.0.4"
+  }
+}
