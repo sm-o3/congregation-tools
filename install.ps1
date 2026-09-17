@@ -5,6 +5,17 @@
 
 $ErrorActionPreference = "Stop"
 
+# Allow script execution for current PowerShell process (bypasses Restricted policy without needing Admin)
+try {
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process -Force
+} catch {
+    # Fallback to Unrestricted in process scope
+    try { Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force } catch {}
+}
+
+# Use npm.cmd on Windows to prevent npm.ps1 execution policy block
+$npmCmd = if (Get-Command npm.cmd -ErrorAction SilentlyContinue) { "npm.cmd" } else { "npm" }
+
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host "    Congregation Tools - Automated 1-Click Setup        " -ForegroundColor Cyan
@@ -95,8 +106,8 @@ if (-not (Test-Path -LiteralPath ".env")) {
 }
 
 # 4. Install Dependencies
-Write-Host "[*] Installing dependencies (npm install)..." -ForegroundColor Cyan
-npm install
+Write-Host "[*] Installing dependencies ($npmCmd install)..." -ForegroundColor Cyan
+& $npmCmd install
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] npm install encountered an error. Please check your internet connection." -ForegroundColor Red
@@ -134,5 +145,5 @@ if ([string]::IsNullOrWhiteSpace($runWizard) -or $runWizard.Trim().ToLower().Sta
     Write-Host "Opening http://localhost:5173 in your default browser..." -ForegroundColor Cyan
     Write-Host ""
     Start-Process "http://localhost:5173"
-    npm run dev
+    & $npmCmd run dev
 }

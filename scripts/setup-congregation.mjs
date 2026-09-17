@@ -328,7 +328,7 @@ async function main() {
             // Ignore
         }
 
-        const devProcess = spawn('npm', ['run', 'dev'], { cwd: ROOT_DIR, stdio: 'inherit' });
+        const devProcess = spawn('npm', ['run', 'dev'], { cwd: ROOT_DIR, stdio: 'inherit', shell: true });
         devProcess.on('close', (code) => process.exit(code || 0));
     } else {
         log('\nSetup complete! You can run the app anytime with:', colors.green);
