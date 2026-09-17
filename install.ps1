@@ -55,6 +55,10 @@ $isRepoDir = (Test-Path -LiteralPath "package.json") -and (Get-Content -LiteralP
 
 if (-not $isRepoDir) {
     $currentPath = (Get-Location).Path
+    # If running from System32 or Windows directory (common when opening PowerShell as Admin), use user home
+    if ($currentPath -match "\\(windows|system32)(\\.*)?$" -or $currentPath -eq $env:WINDIR) {
+        $currentPath = $HOME
+    }
     $installDir = Join-Path $currentPath "Cong-Tools"
     Write-Host "[*] Setting up in: $installDir" -ForegroundColor Cyan
 

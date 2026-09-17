@@ -2,7 +2,7 @@
 
 /**
  * Congregation Tools - Interactive Automated Setup Wizard
- * Guides a new congregation step-by-step through Steps 1-5 directly in the terminal.
+ * Guides a new congregation step-by-step through Steps 1 to 5 directly in the terminal.
  */
 
 import readline from 'readline/promises';
@@ -43,6 +43,20 @@ function header(title) {
     console.log('');
 }
 
+function openUrl(url) {
+    try {
+        if (process.platform === 'win32') {
+            execSync(`start "" "${url}"`, { stdio: 'ignore' });
+        } else if (process.platform === 'darwin') {
+            execSync(`open "${url}"`, { stdio: 'ignore' });
+        } else {
+            execSync(`xdg-open "${url}" 2>/dev/null || true`, { stdio: 'ignore' });
+        }
+    } catch (e) {
+        // Ignore
+    }
+}
+
 function runCommand(cmd, options = {}) {
     try {
         return execSync(cmd, { cwd: ROOT_DIR, stdio: 'inherit', ...options });
@@ -53,7 +67,7 @@ function runCommand(cmd, options = {}) {
 
 function runCommandSilent(cmd, options = {}) {
     try {
-        return execSync(cmd, { cwd: ROOT_DIR, encoding: 'utf8', stdio: 'pipe', ...options });
+        return execSync(cmd, { cwd: ROOT_DIR, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], ...options });
     } catch (err) {
         return null;
     }
@@ -105,6 +119,41 @@ function getFirebaseCliToken() {
     return null;
 }
 
+// Fetch list of projects accessible to logged-in user
+function getFirebaseProjects() {
+    try {
+        const out = runCommandSilent('npx -y firebase-tools projects:list --json', { timeout: 25000 });
+        if (!out) return [];
+        const idx = out.indexOf('{');
+        if (idx !== -1) {
+            const parsed = JSON.parse(out.slice(idx));
+            return parsed.result || [];
+        }
+    } catch (err) {
+        // Fallback
+    }
+    return [];
+}
+
+// Fetch or create Web App config from Firebase CLI
+function getProjectSdkConfig(projectId) {
+    try {
+        let sdkOut = runCommandSilent(`npx -y firebase-tools apps:sdkconfig WEB --project ${projectId}`, { timeout: 20000 });
+        let config = parseFirebaseConfigSnippet(sdkOut);
+        if (config && config.apiKey) return config;
+
+        // If no web app exists yet in this project, create one automatically
+        runCommandSilent(`npx -y firebase-tools apps:create WEB "Congregation Tools" --project ${projectId}`, { timeout: 20000 });
+        
+        sdkOut = runCommandSilent(`npx -y firebase-tools apps:sdkconfig WEB --project ${projectId}`, { timeout: 20000 });
+        config = parseFirebaseConfigSnippet(sdkOut);
+        if (config && config.apiKey) return config;
+    } catch (err) {
+        // Fallback
+    }
+    return null;
+}
+
 async function main() {
     const rl = readline.createInterface({ input, output });
 
@@ -117,76 +166,143 @@ async function main() {
     // -------------------------------------------------------------
     header('Step 1: Firebase Project & CLI Login');
     log('Congregation Tools uses Google Firebase for Database, Authentication, and Hosting.', colors.white);
-    log('If you do not have a Firebase project yet, create one free at:', colors.yellow);
-    log('👉 https://console.firebase.google.com/ (Click "Add project")\n', colors.cyan);
 
-    const loginAns = await rl.question(`${colors.bright}Would you like to log in with Firebase CLI now? (Recommended) [Y/n]: ${colors.reset}`);
-    const shouldLogin = !loginAns.trim() || loginAns.trim().toLowerCase().startsWith('y');
+    let hasCliToken = getFirebaseCliToken();
 
-    if (shouldLogin) {
-        log('\nOpening Firebase login in your browser...', colors.cyan);
-        runCommand('npx -y firebase-tools login');
+    if (!hasCliToken) {
+        log('\nLogging in with Firebase CLI allows this wizard to automatically configure everything for you.', colors.yellow);
+        const loginAns = await rl.question(`${colors.bright}Would you like to log in with Firebase CLI now? (Recommended) [Y/n]: ${colors.reset}`);
+        const shouldLogin = !loginAns.trim() || loginAns.trim().toLowerCase().startsWith('y');
+
+        if (shouldLogin) {
+            log('\nOpening Firebase login in your browser...', colors.cyan);
+            runCommand('npx -y firebase-tools login');
+            hasCliToken = getFirebaseCliToken();
+        }
+    } else {
+        log('[OK] Firebase CLI authentication detected.', colors.green);
     }
 
     // -------------------------------------------------------------
-    // STEP 2: Configure Environment (.env & .firebaserc)
+    // STEP 2: Project Selection & Configuration
     // -------------------------------------------------------------
-    header('Step 2: Connect Your Congregation Firebase Configuration');
+    header('Step 2: Select or Create Firebase Project');
 
+    let selectedProjectId = '';
     let firebaseConfig = null;
 
-    // Check if user wants to attempt automatic config fetch via Firebase CLI
-    const hasCliToken = getFirebaseCliToken();
-    let projectIdInput = '';
-
     if (hasCliToken) {
-        const fetchAns = await rl.question(`${colors.bright}Enter your Firebase Project ID (e.g. my-congregation-tools): ${colors.reset}`);
-        projectIdInput = fetchAns.trim();
+        log('Fetching your Firebase projects...', colors.cyan);
+        const projects = getFirebaseProjects();
 
-        if (projectIdInput) {
-            log(`\nAttempting to fetch Web App config for project "${projectIdInput}"...`, colors.cyan);
-            const sdkOut = runCommandSilent(`npx -y firebase-tools apps:sdkconfig WEB --project ${projectIdInput}`);
-            if (sdkOut) {
-                firebaseConfig = parseFirebaseConfigSnippet(sdkOut);
-                if (firebaseConfig && firebaseConfig.apiKey) {
-                    log(`[OK] Successfully retrieved Firebase config automatically!`, colors.green);
+        if (projects && projects.length > 0) {
+            log('\nFound existing Firebase projects in your Google account:', colors.bright);
+            projects.forEach((p, idx) => {
+                const label = p.displayName ? `${p.displayName} (${p.projectId})` : p.projectId;
+                log(`  [${idx + 1}] ${label}`, colors.white);
+            });
+            log(`  [N] Create a NEW Firebase project for this congregation`, colors.yellow);
+            console.log('');
+
+            const choice = (await rl.question(`${colors.bright}Select a project number or enter 'N' for new [1]: ${colors.reset}`)).trim();
+            
+            if (!choice || !isNaN(choice)) {
+                const idx = choice ? parseInt(choice, 10) - 1 : 0;
+                if (projects[idx]) {
+                    selectedProjectId = projects[idx].projectId;
+                    log(`\nSelected project: "${selectedProjectId}"`, colors.green);
                 }
             }
         }
     }
 
-    // Fallback or manual entry
-    if (!firebaseConfig || !firebaseConfig.apiKey) {
-        log('\nTo get your config from Firebase Console:', colors.yellow);
-        log('1. Open https://console.firebase.google.com/', colors.white);
-        log('2. Click Project Settings (⚙️ icon) > General > "Your apps" > Web App (</>)', colors.white);
-        log('3. Copy your firebaseConfig credentials.\n', colors.white);
+    // If user wants to create a new project or has no projects yet
+    if (!selectedProjectId) {
+        log('\nEvery congregation needs a Firebase Project.', colors.bright);
+        log('Creating a project is 100% FREE on the Spark plan.', colors.white);
+        console.log('');
+        log('1. Create project via Firebase Console in browser (Recommended - takes 30 seconds)', colors.cyan);
+        log('2. Attempt creation via command line', colors.white);
+        log('3. I already know my Project ID', colors.white);
+        console.log('');
 
-        log('You can either paste your entire "const firebaseConfig = { ... };" snippet below,', colors.cyan);
-        log('or press ENTER to fill in fields one by one.\n', colors.cyan);
+        const createChoice = (await rl.question(`Choose an option [1]: `)).trim();
 
-        const snippet = await rl.question(`${colors.bright}Paste firebaseConfig snippet (or press ENTER): ${colors.reset}`);
+        if (createChoice === '2') {
+            const desiredId = (await rl.question(`Enter unique project ID (e.g. city-cong-tools): `)).trim();
+            const displayName = (await rl.question(`Enter project display name (e.g. City Congregation): `)).trim() || desiredId;
+            log(`\nAttempting to create project "${desiredId}" via Firebase CLI...`, colors.cyan);
+            const created = runCommand(`npx -y firebase-tools projects:create ${desiredId} --display-name "${displayName}"`);
+            if (created !== null) {
+                selectedProjectId = desiredId;
+                log(`[OK] Project created successfully!`, colors.green);
+            } else {
+                log(`\n[!] Automatic CLI creation did not succeed (Google often requires console terms).`, colors.yellow);
+            }
+        }
+
+        if (!selectedProjectId && createChoice !== '3') {
+            log('\nOpening Firebase Console in your browser...', colors.cyan);
+            log('👉 1. Click "Add project" (or "Create a project")', colors.white);
+            log('👉 2. Enter your Congregation Name (e.g. "Central Congregation")', colors.white);
+            log('👉 3. Click "Continue" -> "Create project"\n', colors.white);
+            openUrl('https://console.firebase.google.com/');
+
+            while (!selectedProjectId) {
+                const entered = (await rl.question(`${colors.bright}Enter the Project ID you just created in the console: ${colors.reset}`)).trim();
+                if (entered) {
+                    selectedProjectId = entered;
+                }
+            }
+        } else if (!selectedProjectId) {
+            selectedProjectId = (await rl.question(`${colors.bright}Enter your Firebase Project ID: ${colors.reset}`)).trim();
+        }
+    }
+
+    // Automatically attempt to fetch web app credentials for the project
+    if (selectedProjectId && hasCliToken) {
+        log(`\nRetrieving Web App configuration for "${selectedProjectId}"...`, colors.cyan);
+        firebaseConfig = getProjectSdkConfig(selectedProjectId);
+        if (firebaseConfig && firebaseConfig.apiKey) {
+            log(`[OK] Retrieved Web App configuration automatically!`, colors.green);
+        }
+    }
+
+    // Fallback: If config could not be fetched automatically or user needs to paste
+    while (!firebaseConfig || !firebaseConfig.apiKey) {
+        log(`\n[!] Web App credentials needed for project "${selectedProjectId}".`, colors.yellow);
+        log(`1. Open: https://console.firebase.google.com/project/${selectedProjectId}/settings/general`, colors.cyan);
+        log(`2. Under "Your apps", click the Web icon (</>) and register your app.`, colors.white);
+        log(`3. Copy the "firebaseConfig" snippet.\n`, colors.white);
+
+        const snippet = await rl.question(`${colors.bright}Paste your firebaseConfig snippet (or press ENTER to type API key): ${colors.reset}`);
         const parsed = parseFirebaseConfigSnippet(snippet);
 
         if (parsed && parsed.apiKey) {
             firebaseConfig = parsed;
-        } else {
-            const projectId = projectIdInput || (await rl.question(`Firebase Project ID: `)).trim();
-            const apiKey = (await rl.question(`Firebase API Key (apiKey): `)).trim();
-            const authDomain = (await rl.question(`Auth Domain [default: ${projectId}.firebaseapp.com]: `)).trim() || `${projectId}.firebaseapp.com`;
-            const storageBucket = (await rl.question(`Storage Bucket [default: ${projectId}.firebasestorage.app]: `)).trim() || `${projectId}.firebasestorage.app`;
-            const messagingSenderId = (await rl.question(`Messaging Sender ID: `)).trim();
-            const appId = (await rl.question(`App ID (1:xxx:web:xxx): `)).trim();
-
-            firebaseConfig = {
-                apiKey,
-                authDomain,
-                projectId,
-                storageBucket,
-                messagingSenderId,
-                appId
-            };
+            if (!firebaseConfig.projectId) firebaseConfig.projectId = selectedProjectId;
+            break;
         }
+
+        const apiKey = (await rl.question(`Firebase API Key (apiKey): `)).trim();
+        if (!apiKey) {
+            log(`[ERROR] API Key is required. Please paste your config snippet or API key.`, colors.red);
+            continue;
+        }
+
+        const authDomain = (await rl.question(`Auth Domain [default: ${selectedProjectId}.firebaseapp.com]: `)).trim() || `${selectedProjectId}.firebaseapp.com`;
+        const storageBucket = (await rl.question(`Storage Bucket [default: ${selectedProjectId}.firebasestorage.app]: `)).trim() || `${selectedProjectId}.firebasestorage.app`;
+        const messagingSenderId = (await rl.question(`Messaging Sender ID: `)).trim();
+        const appId = (await rl.question(`App ID (1:xxx:web:xxx): `)).trim();
+
+        firebaseConfig = {
+            apiKey,
+            authDomain,
+            projectId: selectedProjectId,
+            storageBucket,
+            messagingSenderId,
+            appId
+        };
     }
 
     // Write .env
@@ -218,16 +334,26 @@ async function main() {
     // STEP 3: Firebase Services & Rules Deployment
     // -------------------------------------------------------------
     header('Step 3: Enable Services & Deploy Firestore Rules');
-    log('Please ensure the following are enabled in your Firebase Console:', colors.yellow);
+    log('Please ensure the following two services are activated in Firebase Console:', colors.yellow);
     log(`1. Google Sign-In:   https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/providers`, colors.cyan);
     log(`2. Firestore DB:     https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`, colors.cyan);
     console.log('');
 
-    const deployRulesAns = await rl.question(`${colors.bright}Deploy firestore.rules to your project now? [Y/n]: ${colors.reset}`);
+    const openLinksAns = await rl.question(`${colors.bright}Open these two pages in your browser now? [Y/n]: ${colors.reset}`);
+    if (!openLinksAns.trim() || openLinksAns.trim().toLowerCase().startsWith('y')) {
+        openUrl(`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/providers`);
+        openUrl(`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore`);
+    }
+
+    const deployRulesAns = await rl.question(`\n${colors.bright}Have you created the Firestore Database? Deploy firestore.rules now? [Y/n]: ${colors.reset}`);
     if (!deployRulesAns.trim() || deployRulesAns.trim().toLowerCase().startsWith('y')) {
         log(`Deploying Firestore security rules to "${firebaseConfig.projectId}"...`, colors.cyan);
-        runCommand(`npx -y firebase-tools deploy --only firestore:rules --project ${firebaseConfig.projectId}`);
-        log(`[OK] Firestore security rules deployed!`, colors.green);
+        const rulesRes = runCommand(`npx -y firebase-tools deploy --only firestore:rules --project ${firebaseConfig.projectId}`);
+        if (rulesRes !== null) {
+            log(`[OK] Firestore security rules deployed!`, colors.green);
+        } else {
+            log(`[!] Note: If Firestore DB has not been created yet in the console, create it first, then run "npx firebase deploy --only firestore:rules".`, colors.yellow);
+        }
     }
 
     // -------------------------------------------------------------
@@ -254,7 +380,6 @@ async function main() {
 
     if (token && adminEmail) {
         try {
-            // Write directly to Firestore using Google Firestore REST API with CLI access token
             const docId = adminEmail.toLowerCase().trim();
             const firestoreUrl = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/users?documentId=${encodeURIComponent(docId)}`;
             
@@ -314,19 +439,7 @@ async function main() {
 
     if (!startLocalAns.trim() || startLocalAns.trim().toLowerCase().startsWith('y')) {
         log('\nStarting local development server at http://localhost:5173 ...\n', colors.green);
-
-        // Open browser
-        try {
-            if (process.platform === 'win32') {
-                execSync('start "" http://localhost:5173', { stdio: 'ignore' });
-            } else if (process.platform === 'darwin') {
-                execSync('open http://localhost:5173', { stdio: 'ignore' });
-            } else {
-                execSync('xdg-open http://localhost:5173 2>/dev/null || true', { stdio: 'ignore' });
-            }
-        } catch (e) {
-            // Ignore
-        }
+        openUrl('http://localhost:5173');
 
         const devProcess = spawn('npm', ['run', 'dev'], { cwd: ROOT_DIR, stdio: 'inherit', shell: true });
         devProcess.on('close', (code) => process.exit(code || 0));
