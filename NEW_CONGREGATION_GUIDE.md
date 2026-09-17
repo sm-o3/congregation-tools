@@ -4,27 +4,37 @@ This guide walks you through setting up **Congregation Tools** for a new congreg
 
 ---
 
-## ⚡ 1-Click Quick Start (Choose Your Operating System)
+## ⚡ Method 1: Instant 1-Line URL Installation (Recommended)
 
-Before running, ensure you have **Node.js (version 18 or newer)** installed from [https://nodejs.org/](https://nodejs.org/).
+No manual downloading or git commands needed! Just open your terminal or PowerShell and paste the command below:
 
-### 🪟 Windows (1-Click)
-1. **Initial Setup**: Double-click `setup-windows.bat` (installs dependencies and creates `.env`).
-2. **Start Local App**: Double-click `start-windows.bat` (opens your browser at `http://localhost:5173`).
-3. **Deploy to Web**: Double-click `deploy-windows.bat` (builds and deploys to Firebase Hosting).
-
-### 🍎 macOS (1-Click)
-1. **Initial Setup**: Double-click `setup-mac.command` in Finder.
-2. **Start Local App**: Double-click `start-mac.command` in Finder.
-3. **Deploy to Web**: Double-click `deploy-mac.command` in Finder.
-
-### 🐧 Linux (1-Click)
-Open your terminal in the project folder and run:
-```bash
-./setup-unix.sh    # Initial setup & dependency installation
-./start-unix.sh    # Starts local server and opens browser
-./deploy-unix.sh   # Builds and deploys to Firebase Hosting
+### 🪟 Windows (Open PowerShell):
+```powershell
+irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.ps1 | iex
 ```
+*What this does automatically:*
+1. Checks for Node.js (offers to install if missing).
+2. Clones or downloads Congregation Tools.
+3. Creates a **"Congregation Tools" shortcut on your Desktop**.
+4. Installs all required packages (`npm install`).
+5. Launches the app in your browser at `http://localhost:5173`.
+
+### 🍎 macOS & 🐧 Linux (Open Terminal):
+```bash
+curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.sh | bash
+```
+
+---
+
+## 🖱️ Method 2: Double-Click Local Launchers
+
+If you have downloaded and extracted this project folder, just double-click:
+
+- **Windows**: Double-click `start-windows.bat` (runs initial setup automatically on first launch).
+- **macOS**: Double-click `start-mac.command` in Finder.
+- **Linux**: Run `./start-unix.sh`.
+
+*(Ensure you have [Node.js](https://nodejs.org/) LTS installed).*
 
 ---
 

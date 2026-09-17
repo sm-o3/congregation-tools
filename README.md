@@ -2,15 +2,32 @@
 
 Production-ready Single Page Admin Dashboard built with Vue 3, Vuetify, and Firebase.
 
-## ⚡ 1-Click Installation (Windows, macOS, Linux)
+## ⚡ Instant 1-Line URL Installation
 
-Any new congregation can set up and run this application with one click:
+You can set up and run Congregation Tools instantly by running a single command:
 
-- **Windows**: Double-click `setup-windows.bat` (to install) and `start-windows.bat` (to launch).
-- **macOS**: Double-click `setup-mac.command` (to install) and `start-mac.command` (to launch).
-- **Linux**: Run `./setup-unix.sh` and `./start-unix.sh`.
+### 🪟 Windows (Open PowerShell):
+```powershell
+irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.ps1 | iex
+```
+*(Automatically checks Node.js, downloads the app, creates desktop shortcut, installs dependencies, and opens the browser).*
 
-👉 **For a step-by-step 5-minute setup guide, see [NEW_CONGREGATION_GUIDE.md](NEW_CONGREGATION_GUIDE.md).**
+### 🍎 macOS & 🐧 Linux (Open Terminal):
+```bash
+curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.sh | bash
+```
+
+---
+
+## 🖱️ Or Double-Click Local Launchers
+
+If you have downloaded this repository folder:
+
+- **Windows**: Double-click `start-windows.bat` (automatically runs setup on first launch).
+- **macOS**: Double-click `start-mac.command` in Finder.
+- **Linux**: Run `./start-unix.sh`.
+
+👉 **For complete 5-minute setup with your own congregation's Firebase backend, see [NEW_CONGREGATION_GUIDE.md](NEW_CONGREGATION_GUIDE.md).**
 
 ## Features
 
