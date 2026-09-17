@@ -40,43 +40,56 @@ $nodeVer = node -v
 Write-Host "[OK] Node.js detected: $nodeVer" -ForegroundColor Green
 
 # 2. Check directory / Download repository
-$isRepoDir = (Test-Path "package.json") -and (Get-Content "package.json" -Raw | Select-String "congregation-tools" -Quiet)
+$isRepoDir = (Test-Path -LiteralPath "package.json") -and (Get-Content -LiteralPath "package.json" -Raw | Select-String "congregation-tools" -Quiet)
 
 if (-not $isRepoDir) {
-    $installDir = Join-Path (Get-Location) "Cong-Tools"
+    $currentPath = (Get-Location).Path
+    $installDir = Join-Path $currentPath "Cong-Tools"
     Write-Host "[*] Setting up in: $installDir" -ForegroundColor Cyan
 
-    if (Test-Path $installDir) {
-        Set-Location $installDir
+    if (Test-Path -LiteralPath $installDir) {
+        Set-Location -LiteralPath $installDir
     } else {
         if (Get-Command git -ErrorAction SilentlyContinue) {
             Write-Host "[*] Cloning repository from GitHub..." -ForegroundColor Cyan
-            git clone https://github.com/sm-o3/congregation-tools.git Cong-Tools
-            Set-Location Cong-Tools
+            git clone https://github.com/sm-o3/congregation-tools.git "$installDir"
+            Set-Location -LiteralPath $installDir
         } else {
             Write-Host "[*] Downloading Congregation Tools package..." -ForegroundColor Cyan
-            $zipPath = Join-Path $env:TEMP "cong-tools.zip"
-            $extractPath = Join-Path $env:TEMP "cong-tools-extract"
+            $tempDir = [System.IO.Path]::GetTempPath()
+            $zipPath = Join-Path $tempDir "cong-tools.zip"
+            $extractPath = Join-Path $tempDir "cong-tools-extract"
 
-            if (Test-Path $zipPath) { Remove-Item $zipPath -Force }
-            if (Test-Path $extractPath) { Remove-Item $extractPath -Recurse -Force }
+            if (Test-Path -LiteralPath $zipPath) { Remove-Item -LiteralPath $zipPath -Force }
+            if (Test-Path -LiteralPath $extractPath) { Remove-Item -LiteralPath $extractPath -Recurse -Force }
 
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
             Invoke-WebRequest -Uri "https://github.com/sm-o3/congregation-tools/archive/refs/heads/main.zip" -OutFile $zipPath
-            Expand-Archive -Path $zipPath -DestinationPath $extractPath -Force
             
-            Move-Item -Path (Join-Path $extractPath "congregation-tools-main") -Destination $installDir
-            Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
-            Remove-Item $extractPath -Recurse -Force -ErrorAction SilentlyContinue
+            Expand-Archive -LiteralPath $zipPath -DestinationPath $extractPath -Force
+            
+            if (-not (Test-Path -LiteralPath $installDir)) {
+                New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+            }
 
-            Set-Location $installDir
+            # Copy extracted files recursively into $installDir (avoids 8.3 short-name & Move-Item path issues with spaces)
+            $sourceContent = Join-Path $extractPath "congregation-tools-main"
+            Get-ChildItem -LiteralPath $sourceContent -Force | ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination $installDir -Recurse -Force
+            }
+
+            Remove-Item -LiteralPath $zipPath -Force -ErrorAction SilentlyContinue
+            Remove-Item -LiteralPath $extractPath -Recurse -Force -ErrorAction SilentlyContinue
+
+            Set-Location -LiteralPath $installDir
         }
     }
 }
 
 # 3. Setup environment configuration
-if (-not (Test-Path ".env")) {
-    if (Test-Path ".env.example") {
-        Copy-Item ".env.example" ".env"
+if (-not (Test-Path -LiteralPath ".env")) {
+    if (Test-Path -LiteralPath ".env.example") {
+        Copy-Item -LiteralPath ".env.example" -Destination ".env"
         Write-Host "[OK] Configuration template created (.env)" -ForegroundColor Green
     }
 }
@@ -92,12 +105,13 @@ if ($LASTEXITCODE -ne 0) {
 
 # 5. Create Desktop Shortcut for easy 1-click launching later
 try {
+    $currentDir = (Get-Location).Path
     $wshShell = New-Object -ComObject WScript.Shell
     $desktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
     $shortcutPath = Join-Path $desktopPath "Congregation Tools.lnk"
     $shortcut = $wshShell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = (Join-Path (Get-Location) "start-windows.bat")
-    $shortcut.WorkingDirectory = (Get-Location)
+    $shortcut.TargetPath = (Join-Path $currentDir "start-windows.bat")
+    $shortcut.WorkingDirectory = $currentDir
     $shortcut.Description = "Launch Congregation Tools"
     $shortcut.Save()
     Write-Host "[OK] Created Desktop shortcut: 'Congregation Tools'" -ForegroundColor Green
