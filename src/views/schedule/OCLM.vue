@@ -11,7 +11,7 @@
       <v-tab v-if="!isEditorPublisher" value="overview">Overview</v-tab>
       <v-tab value="schedule">Schedule</v-tab>
       <v-tab v-if="authStore.isAdmin" value="generator">Generator</v-tab>
-      <v-tab v-if="!isEditorPublisher" value="workbooks">Workbooks</v-tab>
+      <v-tab v-if="!hideWorkbooks" value="workbooks">Workbooks</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
@@ -58,7 +58,7 @@
       </v-window-item>
 
       <!-- Tab 4: Workbooks (Active View) -->
-      <v-window-item v-if="!isEditorPublisher" value="workbooks">
+      <v-window-item v-if="!hideWorkbooks" value="workbooks">
         <!-- Workbooks Header Controls -->
         <v-card class="mb-6 rounded-xl border-thin" elevation="1">
           <v-card-text class="pa-4">
@@ -201,11 +201,22 @@ import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
 const isEditorPublisher = computed(() => authStore.isEditor && authStore.isPublisher)
-const activeTab = ref(isEditorPublisher.value ? 'schedule' : 'workbooks')
+const isEditorMS = computed(() => authStore.isEditor && authStore.isMS)
+const hideWorkbooks = computed(() => authStore.isEditor && (authStore.isPublisher || authStore.isMS))
 
-watch(isEditorPublisher, (isEP) => {
-  if (isEP && (activeTab.value === 'overview' || activeTab.value === 'workbooks')) {
+const getInitialTab = () => {
+  if (isEditorPublisher.value) return 'schedule'
+  if (isEditorMS.value) return 'overview'
+  return 'workbooks'
+}
+
+const activeTab = ref(getInitialTab())
+
+watch([isEditorPublisher, isEditorMS], () => {
+  if (isEditorPublisher.value && (activeTab.value === 'overview' || activeTab.value === 'workbooks')) {
     activeTab.value = 'schedule'
+  } else if (isEditorMS.value && activeTab.value === 'workbooks') {
+    activeTab.value = 'overview'
   }
 })
 

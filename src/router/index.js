@@ -172,8 +172,8 @@ const router = createRouter({
 // Navigation guard
 const getDefaultLandingPage = (authStore) => {
     if (authStore.canViewHome) return '/'
-    if (authStore.isAttendant) return '/reports/meeting-attendance-list'
     if (authStore.canViewReportsOverview) return '/reports/overview'
+    if (authStore.isAttendant) return '/reports/meeting-attendance-list'
     if (authStore.canViewMeetingAttendanceList) return '/reports/meeting-attendance-list'
     if (authStore.canViewReports) return '/reports/meeting-attendance-list'
     if (authStore.canViewDatabase) return '/congregation/groups-list'
@@ -216,10 +216,10 @@ router.beforeEach(async (to, from, next) => {
             if (to.meta.rbacCheck === 'canViewHome' && !authStore.canViewHome) {
                 next(getDefaultLandingPage(authStore))
             } else if (to.path.startsWith('/reports/')) {
-                if (authStore.isAttendant) {
-                    next('/reports/meeting-attendance-list')
-                } else if (authStore.canViewReportsOverview) {
+                if (authStore.canViewReportsOverview) {
                     next('/reports/overview')
+                } else if (authStore.isAttendant) {
+                    next('/reports/meeting-attendance-list')
                 } else {
                     next(getDefaultLandingPage(authStore))
                 }

@@ -150,30 +150,29 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     // Access controls based on role:
-    // Home: Admin, and Editor (non-publisher, or pure publisher).
-    // Hidden for Editor - Publisher role
+    // Home: Admin, and Editor (Elder).
+    // Hidden for Editor - Publisher and Editor - Ministerial Servant roles
     const canViewHome = computed(() => {
         if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value) return false
+        if (isEditor.value && (isPublisher.value || isMS.value)) return false
         return isEditor.value || isPublisher.value
     })
     
     // Congregation: Admin and Editor can view Congregation main menu
     const canViewDatabase = computed(() => isAdmin.value || isEditor.value)
 
-    // Congregation -> Overview: Hidden for Editor - Publisher role
+    // Congregation -> Overview: Hidden for Editor - Publisher and Editor - Ministerial Servant roles
     const canViewCongregationOverview = computed(() => {
         if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value) return false
+        if (isEditor.value && (isPublisher.value || isMS.value)) return false
         return isEditor.value
     })
     
-    // Publishers List: Admin, or Editor who is Ministerial Servant (or other non-publisher editors). Hidden for Editor (Publisher).
+    // Publishers List: Admin, or Editor who is Elder. Hidden for Editor (Publisher) and Editor (Ministerial Servant).
     const canViewPublishersList = computed(() => {
         if (isAdmin.value) return true
-        if (isEditor.value && isMS.value) return true
-        if (isEditor.value && !isPublisher.value && !isMS.value) return true
-        return false
+        if (isEditor.value && (isPublisher.value || isMS.value)) return false
+        return isEditor.value
     })
 
     // Groups menu (/congregation/groups): Admin only (hidden for Editor)
@@ -192,10 +191,10 @@ export const useAuthStore = defineStore('auth', () => {
         return isAdmin.value || isEditor.value
     })
 
-    // Reports -> Add Meeting Attendance: Only for Attendants (for Editor-Publisher role)
+    // Reports -> Add Meeting Attendance: Only for Attendants (for Editor-Publisher and Editor-MS roles)
     const canViewAddMeetingAttendance = computed(() => {
         if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value) {
+        if (isEditor.value && (isPublisher.value || isMS.value)) {
             return isAttendant.value
         }
         return isAdmin.value || isEditor.value
@@ -206,10 +205,10 @@ export const useAuthStore = defineStore('auth', () => {
         return isAdmin.value || isEditor.value
     })
 
-    // Reports -> Meeting Attendance List: Only for Attendants (for Editor-Publisher role)
+    // Reports -> Meeting Attendance List: Only for Attendants (for Editor-Publisher and Editor-MS roles)
     const canViewMeetingAttendanceList = computed(() => {
         if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value) {
+        if (isEditor.value && (isPublisher.value || isMS.value)) {
             return isAttendant.value
         }
         return isAdmin.value || isEditor.value

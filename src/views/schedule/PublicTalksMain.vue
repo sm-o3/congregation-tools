@@ -7,14 +7,14 @@
     </v-row>
 
     <v-tabs v-model="activeTab" color="primary" class="mb-6" show-arrows>
-      <v-tab v-if="!isEditorPublisher" value="overview">Overview</v-tab>
+      <v-tab v-if="!hideOverviewAndS99" value="overview">Overview</v-tab>
       <v-tab value="schedule">Schedule</v-tab>
       <v-tab v-if="authStore.isAdmin" value="generator">Generator</v-tab>
-      <v-tab v-if="!isEditorPublisher" value="master">S-99</v-tab>
+      <v-tab v-if="!hideOverviewAndS99" value="master">S-99</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
-      <v-window-item v-if="!isEditorPublisher" value="overview">
+      <v-window-item v-if="!hideOverviewAndS99" value="overview">
         <PublicTalksOverview />
       </v-window-item>
       <v-window-item value="schedule">
@@ -23,7 +23,7 @@
       <v-window-item v-if="authStore.isAdmin" value="generator">
         <ScheduleGenerator @schedule-generated="handleScheduleGenerated" />
       </v-window-item>
-      <v-window-item v-if="!isEditorPublisher" value="master">
+      <v-window-item v-if="!hideOverviewAndS99" value="master">
         <MasterListS99 />
       </v-window-item>
     </v-window>
@@ -43,12 +43,14 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const isEditorPublisher = computed(() => authStore.isEditor && authStore.isPublisher)
+const hideOverviewAndS99 = computed(() => {
+  return authStore.isEditor && (authStore.isPublisher || authStore.isMS)
+})
 
 const validTabs = ['overview', 'schedule', 'generator', 'master']
 const getInitialTab = () => {
   const qTab = route.query.tab
-  if (isEditorPublisher.value) {
+  if (hideOverviewAndS99.value) {
     return 'schedule'
   }
   return validTabs.includes(qTab) ? qTab : 'overview'
@@ -57,14 +59,14 @@ const getInitialTab = () => {
 const activeTab = ref(getInitialTab())
 const schedule = ref([])
 
-watch(isEditorPublisher, (isEP) => {
-  if (isEP && (activeTab.value === 'overview' || activeTab.value === 'master')) {
+watch(hideOverviewAndS99, (hide) => {
+  if (hide && (activeTab.value === 'overview' || activeTab.value === 'master')) {
     activeTab.value = 'schedule'
   }
 })
 
 watch(() => route.query.tab, (newTab) => {
-  if (isEditorPublisher.value && (newTab === 'overview' || newTab === 'master')) {
+  if (hideOverviewAndS99.value && (newTab === 'overview' || newTab === 'master')) {
     activeTab.value = 'schedule'
     return
   }

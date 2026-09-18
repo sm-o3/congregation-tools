@@ -429,7 +429,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 
 const canViewAttendanceTable = computed(() => {
-  if (authStore.isEditor && authStore.isPublisher) {
+  if (authStore.isEditor && (authStore.isPublisher || authStore.isMS)) {
     return authStore.isAttendant
   }
   return true
