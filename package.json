@@ -10,6 +10,7 @@
     "setup": "node scripts/setup-congregation.mjs",
     "setup:congregation": "node scripts/setup-congregation.mjs",
     "update": "node scripts/update.mjs",
+    "deploy": "vite build && firebase deploy --only hosting",
     "add-admin": "node scripts/add-admin-user.js"
   },
   "dependencies": {
