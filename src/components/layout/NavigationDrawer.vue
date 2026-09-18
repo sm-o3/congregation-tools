@@ -91,6 +91,7 @@
         </template>
         
         <v-list-item 
+          v-if="authStore.canViewReportsOverview"
           prepend-icon="mdi-chart-bar" 
           title="Overview" 
           to="/reports/overview"
@@ -99,6 +100,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewAddReport"
           prepend-icon="mdi-plus-circle" 
           title="Add Reports" 
           to="/reports/add"
@@ -107,6 +109,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewAddMeetingAttendance"
           prepend-icon="mdi-calendar-plus" 
           title="Add Meeting Attendance" 
           to="/reports/add-meeting-attendance"
@@ -115,6 +118,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewReportsList"
           prepend-icon="mdi-format-list-bulleted" 
           title="Reports List" 
           to="/reports/list"
@@ -123,6 +127,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewMeetingAttendanceList"
           prepend-icon="mdi-calendar-text" 
           title="Meeting Attendance List" 
           to="/reports/meeting-attendance-list"

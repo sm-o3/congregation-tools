@@ -68,31 +68,31 @@ const routes = [
         path: '/reports/overview',
         name: 'ReportsOverview',
         component: () => import('@/views/reports/Overview.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewReports' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewReportsOverview' }
     },
     {
         path: '/reports/add',
         name: 'AddReport',
         component: () => import('@/views/reports/AddReport.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewReports' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewAddReport' }
     },
     {
         path: '/reports/add-meeting-attendance',
         name: 'AddMeetingAttendance',
         component: () => import('@/views/reports/AddMeetingAttendance.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewReports' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewAddMeetingAttendance' }
     },
     {
         path: '/reports/list',
         name: 'ReportsList',
         component: () => import('@/views/reports/ReportsList.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewReports' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewReportsList' }
     },
     {
         path: '/reports/meeting-attendance-list',
         name: 'MeetingAttendanceList',
         component: () => import('@/views/reports/MeetingAttendanceList.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewReports' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewMeetingAttendanceList' }
     },
     {
         path: '/reports/publisher-record',
@@ -170,6 +170,17 @@ const router = createRouter({
 })
 
 // Navigation guard
+const getDefaultLandingPage = (authStore) => {
+    if (authStore.canViewHome) return '/'
+    if (authStore.isAttendant) return '/reports/meeting-attendance-list'
+    if (authStore.canViewReportsOverview) return '/reports/overview'
+    if (authStore.canViewMeetingAttendanceList) return '/reports/meeting-attendance-list'
+    if (authStore.canViewReports) return '/reports/meeting-attendance-list'
+    if (authStore.canViewDatabase) return '/congregation/groups-list'
+    if (authStore.canViewSchedule) return '/schedule/public-talks'
+    return '/profile'
+}
+
 router.beforeEach(async (to, from, next) => {
     const authStore = useAuthStore()
 
@@ -199,16 +210,19 @@ router.beforeEach(async (to, from, next) => {
             next('/login')
         } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
             // Needs admin but user is not admin
-            if (!authStore.canViewHome && authStore.canViewReports) {
-                next('/reports/overview')
-            } else {
-                next('/') // Redirect to home or another safe page
-            }
+            next(getDefaultLandingPage(authStore))
         } else if (to.meta.rbacCheck && !authStore[to.meta.rbacCheck]) {
             // Check specific RBAC rules
             if (to.meta.rbacCheck === 'canViewHome' && !authStore.canViewHome) {
-                if (authStore.canViewReports) next('/reports/overview')
-                else next('/login')
+                next(getDefaultLandingPage(authStore))
+            } else if (to.path.startsWith('/reports/')) {
+                if (authStore.isAttendant) {
+                    next('/reports/meeting-attendance-list')
+                } else if (authStore.canViewReportsOverview) {
+                    next('/reports/overview')
+                } else {
+                    next(getDefaultLandingPage(authStore))
+                }
             } else if (to.path.startsWith('/schedule/') && authStore.canViewSchedule) {
                 next('/schedule/public-talks')
             } else if (to.path.startsWith('/territory/') && authStore.canViewTerritory) {
@@ -220,11 +234,7 @@ router.beforeEach(async (to, from, next) => {
                     next('/congregation/groups-list')
                 }
             } else {
-                if (!authStore.canViewHome && authStore.canViewReports) {
-                    next('/reports/overview')
-                } else {
-                    next('/')
-                }
+                next(getDefaultLandingPage(authStore))
             }
         } else {
             next()
@@ -232,11 +242,7 @@ router.beforeEach(async (to, from, next) => {
     } else {
         // Login page - redirect if already authenticated
         if (to.path === '/login' && authStore.isAuthenticated && authStore.hasAccess) {
-            if (!authStore.canViewHome && authStore.canViewReports) {
-                next('/reports/overview')
-            } else {
-                next('/')
-            }
+            next(getDefaultLandingPage(authStore))
         } else {
             next()
         }

@@ -16,6 +16,7 @@ export const useAuthStore = defineStore('auth', () => {
     const userGroupId = ref(null)
     const congSettings = ref(null)
     const congregationName = ref('')
+    const userPublisherId = ref(null)
     const loading = ref(true)
     const error = ref(null)
 
@@ -65,6 +66,49 @@ export const useAuthStore = defineStore('auth', () => {
     const isTerritoryAssistant = computed(() => {
         if (!congSettings.value) return false
         return checkRoleMatch(congSettings.value.territoryAssistantUid, congSettings.value.territoryAssistant)
+    })
+
+    const resolveUserPublisher = async (name) => {
+        if (!name) return
+        try {
+            const pubSnap = await getDocs(collection(db, 'publishers'))
+            const target = name.trim().toLowerCase()
+            const found = pubSnap.docs.find(d => {
+                const pName = (d.data().name || '').trim().toLowerCase()
+                return pName === target
+            })
+            if (found) {
+                userPublisherId.value = found.id
+            }
+        } catch (err) {
+            console.error('Error resolving user publisher:', err)
+        }
+    }
+
+    const isAttendant = computed(() => {
+        if (!congSettings.value) return false
+        const attendants = congSettings.value.attendants || []
+        const attendantNames = congSettings.value.attendantNames || []
+        const attendantUids = congSettings.value.attendantUids || []
+        if (!Array.isArray(attendants) && !Array.isArray(attendantNames)) return false
+
+        if (!user.value) return false
+        const u = user.value
+
+        if (u.uid && (attendants.includes(u.uid) || attendantUids.includes(u.uid))) return true
+        if (u.docId && attendants.includes(u.docId)) return true
+        if (userPublisherId.value && attendants.includes(userPublisherId.value)) return true
+
+        if (u.displayName) {
+            const nameLower = u.displayName.trim().toLowerCase()
+            if (attendantNames.some(n => typeof n === 'string' && n.trim().toLowerCase() === nameLower)) return true
+            if (attendants.some(a => typeof a === 'string' && a.trim().toLowerCase() === nameLower)) return true
+        }
+        if (u.email) {
+            const emailLower = u.email.trim().toLowerCase()
+            if (attendants.some(a => typeof a === 'string' && a.trim().toLowerCase() === emailLower)) return true
+        }
+        return false
     })
 
     // Service Committee: Coordinator + Secretary + Service Overseer
@@ -137,6 +181,45 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Reports: Admin, Editor, Publisher, Service Overseer
     const canViewReports = computed(() => isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value)
+
+    // Reports -> Overview: Hidden for Editor-Publisher who is an Attendant
+    const canViewReportsOverview = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value && isAttendant.value) return false
+        return isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value
+    })
+
+    // Reports -> Add Report: Hidden for Editor-Publisher who is an Attendant
+    const canViewAddReport = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value && isAttendant.value) return false
+        return isAdmin.value || isEditor.value
+    })
+
+    // Reports -> Add Meeting Attendance: Only for Attendants (for Editor-Publisher role)
+    const canViewAddMeetingAttendance = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) {
+            return isAttendant.value
+        }
+        return isAdmin.value || isEditor.value
+    })
+
+    // Reports -> Reports List: Hidden for Editor-Publisher who is an Attendant
+    const canViewReportsList = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value && isAttendant.value) return false
+        return isAdmin.value || isEditor.value
+    })
+
+    // Reports -> Meeting Attendance List: Only for Attendants (for Editor-Publisher role)
+    const canViewMeetingAttendanceList = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) {
+            return isAttendant.value
+        }
+        return isAdmin.value || isEditor.value
+    })
     
     // Publisher Record: View allowed for Admin and Editor. (Edit access is restricted to Admin only)
     const canViewPublisherRecord = computed(() => (isAdmin.value || isEditor.value) && !isPublisher.value)
@@ -168,7 +251,14 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Territory view controls:
     // Territory main menu: Admin, Editor, Territory Servant, Territory Assistant, Service Overseer
-    const canViewTerritory = computed(() => isAdmin.value || isEditor.value || isTerritoryServant.value || isTerritoryAssistant.value || isServiceOverseer.value)
+    // Hidden for Editor - Publisher role (unless appointed as Territory Assistant)
+    const canViewTerritory = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) {
+            return isTerritoryAssistant.value
+        }
+        return isEditor.value || isTerritoryServant.value || isTerritoryAssistant.value || isServiceOverseer.value
+    })
     
     // Territory Overview & S-13: Admin, Service Overseer, Territory Servant, Territory Assistant (hidden for regular Editor)
     const canViewTerritoryOverview = computed(() => {
@@ -275,12 +365,14 @@ export const useAuthStore = defineStore('auth', () => {
                 userRole.value = userData.role
                 userSpiritualRole.value = userData.spiritualRole || 'Publisher' // Default to Publisher if not set
                 userGroupId.value = userData.groupId || null
+                await resolveUserPublisher(userData.displayName || email)
                 return { ...userData, docId }
             } else {
                 // User not in database - unauthorized
                 userRole.value = null
                 userSpiritualRole.value = null
                 userGroupId.value = null
+                userPublisherId.value = null
                 return null
             }
         } catch (err) {
@@ -341,6 +433,7 @@ export const useAuthStore = defineStore('auth', () => {
             userRole.value = null
             userSpiritualRole.value = null
             userGroupId.value = null
+            userPublisherId.value = null
             congSettings.value = null
             congregationName.value = ''
             error.value = null
@@ -373,12 +466,14 @@ export const useAuthStore = defineStore('auth', () => {
                         userRole.value = null
                         userSpiritualRole.value = null
                         userGroupId.value = null
+                        userPublisherId.value = null
                     }
                 } else {
                     user.value = null
                     userRole.value = null
                     userSpiritualRole.value = null
                     userGroupId.value = null
+                    userPublisherId.value = null
                 }
 
                 loading.value = false
@@ -393,6 +488,7 @@ export const useAuthStore = defineStore('auth', () => {
         userRole,
         userSpiritualRole,
         userGroupId,
+        userPublisherId,
         congSettings,
         congregationName,
         loading,
@@ -405,6 +501,7 @@ export const useAuthStore = defineStore('auth', () => {
         isServiceOverseer,
         isTerritoryServant,
         isTerritoryAssistant,
+        isAttendant,
         isServiceCommittee,
         canDelete,
         isEditor,
@@ -419,6 +516,11 @@ export const useAuthStore = defineStore('auth', () => {
         canViewPublishersList,
         canViewGroups,
         canViewReports,
+        canViewReportsOverview,
+        canViewAddReport,
+        canViewAddMeetingAttendance,
+        canViewReportsList,
+        canViewMeetingAttendanceList,
         canViewPublisherRecord,
         canEditPublisherRecord,
         canViewReportAnalyze,

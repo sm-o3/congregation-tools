@@ -1400,6 +1400,14 @@ const saveCongSettings = async () => {
   savingCong.value = true
   congSuccessMsg.value = null
   try {
+    if (congSettings.value.attendants && Array.isArray(congSettings.value.attendants)) {
+      congSettings.value.attendantNames = congSettings.value.attendants.map(id => {
+        const pub = publishers.value.find(p => p.id === id)
+        return pub ? pub.name : null
+      }).filter(Boolean)
+    } else {
+      congSettings.value.attendantNames = []
+    }
     const oldCong = { ...congSettings.value }
     await setDoc(doc(db, 'settings', 'congregation'), congSettings.value, { merge: true })
     await logActivity(authStore, 'Appointments Updated', 'Updated Congregation Appointments', null, null, oldCong, congSettings.value)
