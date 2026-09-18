@@ -32,7 +32,7 @@ const routes = [
         path: '/congregation/overview',
         name: 'CongregationOverview',
         component: () => import('@/views/database/Overview.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewDatabase' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewCongregationOverview' }
     },
     { path: '/database/overview', redirect: '/congregation/overview' },
     {
@@ -112,7 +112,7 @@ const routes = [
         path: '/schedule/overview',
         name: 'ScheduleOverview',
         component: () => import('@/views/schedule/Overview.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewSchedule' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewScheduleOverview' }
     },
     {
         path: '/schedule/public-talks',
@@ -135,13 +135,13 @@ const routes = [
         path: '/schedule/cleaning',
         name: 'Cleaning',
         component: () => import('@/views/schedule/CleaningMain.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewSchedule' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewCleaning' }
     },
     {
         path: '/schedule/sound',
         name: 'Sound',
         component: () => import('@/views/schedule/SoundMain.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewSchedule' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewSound' }
     },
     // Territory routes
     {
@@ -199,18 +199,32 @@ router.beforeEach(async (to, from, next) => {
             next('/login')
         } else if (to.meta.requiresAdmin && !authStore.isAdmin) {
             // Needs admin but user is not admin
-            next('/') // Redirect to home or another safe page
+            if (!authStore.canViewHome && authStore.canViewReports) {
+                next('/reports/overview')
+            } else {
+                next('/') // Redirect to home or another safe page
+            }
         } else if (to.meta.rbacCheck && !authStore[to.meta.rbacCheck]) {
             // Check specific RBAC rules
             if (to.meta.rbacCheck === 'canViewHome' && !authStore.canViewHome) {
                 if (authStore.canViewReports) next('/reports/overview')
                 else next('/login')
+            } else if (to.path.startsWith('/schedule/') && authStore.canViewSchedule) {
+                next('/schedule/public-talks')
             } else if (to.path.startsWith('/territory/') && authStore.canViewTerritory) {
                 next('/territory/list')
             } else if (to.path.startsWith('/congregation/') && authStore.canViewDatabase) {
-                next('/congregation/overview')
+                if (authStore.canViewCongregationOverview) {
+                    next('/congregation/overview')
+                } else {
+                    next('/congregation/groups-list')
+                }
             } else {
-                next('/')
+                if (!authStore.canViewHome && authStore.canViewReports) {
+                    next('/reports/overview')
+                } else {
+                    next('/')
+                }
             }
         } else {
             next()

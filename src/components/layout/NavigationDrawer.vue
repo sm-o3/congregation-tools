@@ -33,6 +33,7 @@
         </template>
         
         <v-list-item 
+          v-if="authStore.canViewCongregationOverview"
           prepend-icon="mdi-view-dashboard" 
           title="Overview" 
           to="/congregation/overview"
@@ -163,6 +164,7 @@
         </template>
         
         <v-list-item 
+          v-if="authStore.canViewScheduleOverview"
           prepend-icon="mdi-calendar-month" 
           title="Overview" 
           to="/schedule/overview"
@@ -188,6 +190,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewCleaning"
           prepend-icon="mdi-broom" 
           title="Cleaning" 
           to="/schedule/cleaning"
@@ -196,6 +199,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewSound"
           prepend-icon="mdi-volume-high" 
           title="Sound" 
           to="/schedule/sound"

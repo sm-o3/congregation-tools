@@ -106,11 +106,23 @@ export const useAuthStore = defineStore('auth', () => {
     })
 
     // Access controls based on role:
-    // Home: Admin, Editor, Publisher
-    const canViewHome = computed(() => isAdmin.value || isEditor.value || isPublisher.value)
+    // Home: Admin, and Editor (non-publisher, or pure publisher).
+    // Hidden for Editor - Publisher role
+    const canViewHome = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) return false
+        return isEditor.value || isPublisher.value
+    })
     
     // Congregation: Admin and Editor can view Congregation main menu
     const canViewDatabase = computed(() => isAdmin.value || isEditor.value)
+
+    // Congregation -> Overview: Hidden for Editor - Publisher role
+    const canViewCongregationOverview = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) return false
+        return isEditor.value
+    })
     
     // Publishers List: Admin, or Editor who is Ministerial Servant (or other non-publisher editors). Hidden for Editor (Publisher).
     const canViewPublishersList = computed(() => {
@@ -132,6 +144,27 @@ export const useAuthStore = defineStore('auth', () => {
 
     const canViewReportAnalyze = computed(() => isAdmin.value || isServiceOverseer.value)
     const canViewSchedule = computed(() => isAdmin.value || isEditor.value)
+
+    // Schedule -> Overview: Hidden for Editor - Publisher role
+    const canViewScheduleOverview = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) return false
+        return isEditor.value
+    })
+
+    // Schedule -> Cleaning: Hidden for Editor - Publisher role
+    const canViewCleaning = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) return false
+        return isEditor.value
+    })
+
+    // Schedule -> Sound: Hidden for Editor - Publisher role
+    const canViewSound = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isPublisher.value) return false
+        return isEditor.value
+    })
 
     // Territory view controls:
     // Territory main menu: Admin, Editor, Territory Servant, Territory Assistant, Service Overseer
@@ -382,6 +415,7 @@ export const useAuthStore = defineStore('auth', () => {
         // RBAC View Getters
         canViewHome,
         canViewDatabase,
+        canViewCongregationOverview,
         canViewPublishersList,
         canViewGroups,
         canViewReports,
@@ -389,6 +423,9 @@ export const useAuthStore = defineStore('auth', () => {
         canEditPublisherRecord,
         canViewReportAnalyze,
         canViewSchedule,
+        canViewScheduleOverview,
+        canViewCleaning,
+        canViewSound,
         canViewTerritory,
         canViewTerritoryOverview,
         canViewTerritoryS13,
