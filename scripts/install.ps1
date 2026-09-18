@@ -125,7 +125,7 @@ try {
     $desktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
     $shortcutPath = Join-Path $desktopPath "Congregation Tools.lnk"
     $shortcut = $wshShell.CreateShortcut($shortcutPath)
-    $shortcut.TargetPath = (Join-Path $currentDir "start-windows.bat")
+    $shortcut.TargetPath = (Join-Path $currentDir "scripts\start-windows.bat")
     $shortcut.WorkingDirectory = $currentDir
     $shortcut.Description = "Launch Congregation Tools"
     $shortcut.Save()

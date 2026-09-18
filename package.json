@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "setup": "node scripts/setup-congregation.mjs",
     "setup:congregation": "node scripts/setup-congregation.mjs",
-    "add-admin": "node add-admin-user.js"
+    "add-admin": "node scripts/add-admin-user.js"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",

@@ -2,6 +2,7 @@
 # Congregation Tools - Deploy to Firebase Hosting (Linux / macOS)
 
 set -e
+cd "$(dirname "$0")/.."
 
 echo "========================================================"
 echo "  Building and Deploying to Firebase Hosting..."

@@ -8,13 +8,13 @@ You can set up and run Congregation Tools instantly by running a single command:
 
 ### 🪟 Windows (Open PowerShell):
 ```powershell
-irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/scripts/install.ps1 | iex
 ```
 *(Automatically checks Node.js, downloads the app, creates desktop shortcut, installs dependencies, and opens the browser).*
 
 ### 🍎 macOS & 🐧 Linux (Open Terminal):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/scripts/install.sh | bash
 ```
 
 ---
@@ -23,9 +23,9 @@ curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/insta
 
 If you have downloaded this repository folder:
 
-- **Windows**: Double-click `start-windows.bat` (automatically runs setup on first launch).
-- **macOS**: Double-click `start-mac.command` in Finder.
-- **Linux**: Run `./start-unix.sh`.
+- **Windows**: Double-click `scripts/start-windows.bat` (automatically runs setup on first launch).
+- **macOS**: Double-click `scripts/start-mac.command` in Finder.
+- **Linux**: Run `./scripts/start-unix.sh`.
 
 👉 **For complete 5-minute setup with your own congregation's Firebase backend, see [NEW_CONGREGATION_GUIDE.md](NEW_CONGREGATION_GUIDE.md).**
 

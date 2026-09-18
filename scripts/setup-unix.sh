@@ -2,6 +2,7 @@
 # Congregation Tools - 1-Click Setup (Linux / macOS)
 
 set -e
+cd "$(dirname "$0")/.."
 
 echo "========================================================"
 echo "  Congregation Tools - Initial Setup"
@@ -33,10 +34,7 @@ echo "[INFO] Installing project dependencies..."
 npm install
 
 # Make scripts executable
-chmod +x setup-unix.sh start-unix.sh deploy-unix.sh 2>/dev/null || true
-if [ -f setup-mac.command ]; then
-    chmod +x setup-mac.command start-mac.command deploy-mac.command 2>/dev/null || true
-fi
+chmod +x scripts/*.sh scripts/*.command scripts/*.mjs 2>/dev/null || true
 
 echo ""
 echo "========================================================"
@@ -52,7 +50,7 @@ else
     echo "  npm run setup"
     echo ""
     echo "To start the app:"
-    echo "  ./start-unix.sh  : Local server (http://localhost:5173)"
-    echo "  ./deploy-unix.sh : Deploy to Firebase Hosting"
+    echo "  ./scripts/start-unix.sh  : Local server (http://localhost:5173)"
+    echo "  ./scripts/deploy-unix.sh : Deploy to Firebase Hosting"
     echo ""
 fi

@@ -1,5 +1,7 @@
 @echo off
 title Congregation Tools - 1-Click Setup (Windows)
+cd /d "%~dp0\.."
+
 echo ========================================================
 echo   Congregation Tools - Initial Setup
 echo ========================================================
@@ -53,9 +55,8 @@ if /i "%runWizard%"=="Y" (
     echo   npm run setup
     echo.
     echo To start the app:
-    echo   - start-windows.bat  : Local server (http://localhost:5173)
-    echo   - deploy-windows.bat : Deploy to Firebase Hosting
+    echo   - scripts\start-windows.bat  : Local server (http://localhost:5173)
+    echo   - scripts\deploy-windows.bat : Deploy to Firebase Hosting
     echo.
     pause
 )
-

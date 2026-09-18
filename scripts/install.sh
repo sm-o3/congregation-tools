@@ -61,7 +61,7 @@ if [ ! -f .env ]; then
 fi
 
 # 4. Make all helper scripts executable
-chmod +x *.sh *.command 2>/dev/null || true
+chmod +x scripts/*.sh scripts/*.command scripts/*.mjs 2>/dev/null || true
 
 # 5. Install Dependencies
 echo -e "\033[1;34m[*] Installing dependencies (npm install)...\033[0m"

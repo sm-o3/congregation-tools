@@ -2,11 +2,12 @@
 # Congregation Tools - Start Server (Linux / macOS)
 
 set -e
+cd "$(dirname "$0")/.."
 
 # If dependencies are not installed yet, run setup first
 if [ ! -d "node_modules" ]; then
     echo "[INFO] Dependencies not found. Running setup..."
-    bash setup-unix.sh
+    bash scripts/setup-unix.sh
 fi
 
 echo "========================================================"

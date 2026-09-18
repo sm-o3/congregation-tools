@@ -85,9 +85,9 @@ Once logged in as an administrator, you have access to:
 ## 🔧 Local Development & Updating
 
 Run with 1-click using the provided startup scripts:
-- **Windows**: Double-click `start-windows.bat`
-- **Mac**: Double-click `start-mac.command`
-- **Linux**: Run `./start-unix.sh`
+- **Windows**: Double-click `scripts/start-windows.bat`
+- **Mac**: Double-click `scripts/start-mac.command`
+- **Linux**: Run `./scripts/start-unix.sh`
 
 Or manually via terminal:
 ```bash

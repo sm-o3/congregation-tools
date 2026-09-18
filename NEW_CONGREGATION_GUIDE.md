@@ -8,20 +8,20 @@ This guide walks you through setting up **Congregation Tools** for a new congreg
 
 ### 🪟 Windows (Open PowerShell):
 ```powershell
-irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/sm-o3/congregation-tools/main/scripts/install.ps1 | iex
 ```
 *(Automatically checks Node.js, downloads the app, creates desktop shortcut, installs dependencies, and launches the setup wizard).*
 
 ### 🍎 macOS & 🐧 Linux (Open Terminal):
 ```bash
-curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/sm-o3/congregation-tools/main/scripts/install.sh | bash
 ```
 
 ### 🖱️ Or Double-Click Local Launchers:
 If you downloaded the ZIP or cloned the repo:
-- **Windows**: Double-click `setup-windows.bat`
-- **macOS**: Double-click `setup-mac.command`
-- **Linux**: Run `./setup-unix.sh`
+- **Windows**: Double-click `scripts/setup-windows.bat` (or `scripts/start-windows.bat`)
+- **macOS**: Double-click `scripts/setup-mac.command` (or `scripts/start-mac.command`)
+- **Linux**: Run `./scripts/setup-unix.sh` (or `./scripts/start-unix.sh`)
 
 ---
 
@@ -98,9 +98,9 @@ npm run add-admin
 Enter the Elder's Google account email and name. The user will be created in Firestore.
 
 ### Step 5: Deploy to the Web
-- **Windows**: Double-click `deploy-windows.bat`
-- **macOS**: Double-click `deploy-mac.command`
-- **Linux**: Run `./deploy-unix.sh`
+- **Windows**: Double-click `scripts/deploy-windows.bat`
+- **macOS**: Double-click `scripts/deploy-mac.command`
+- **Linux**: Run `./scripts/deploy-unix.sh`
 
 Your app is live at `https://<your-project-id>.web.app`!
 

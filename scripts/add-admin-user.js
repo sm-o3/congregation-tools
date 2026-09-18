@@ -14,7 +14,7 @@ const __dirname = path.dirname(__filename);
 
 // Read .env if available
 function loadEnv() {
-    const envPath = path.resolve(__dirname, '.env');
+    const envPath = path.resolve(__dirname, '..', '.env');
     const env = {};
     if (fs.existsSync(envPath)) {
         const content = fs.readFileSync(envPath, 'utf8');

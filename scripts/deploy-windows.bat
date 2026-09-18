@@ -1,5 +1,7 @@
 @echo off
 title Congregation Tools - Deploy to Firebase Hosting
+cd /d "%~dp0\.."
+
 echo ========================================================
 echo   Building and Deploying to Firebase Hosting...
 echo ========================================================

@@ -1,5 +1,7 @@
 @echo off
 title Congregation Tools - Local Server
+cd /d "%~dp0\.."
+
 echo ========================================================
 echo   Starting Congregation Tools Server...
 echo ========================================================
@@ -7,7 +9,7 @@ echo.
 
 if not exist node_modules (
     echo [INFO] First time running? Running setup first...
-    call setup-windows.bat
+    call scripts\setup-windows.bat
 )
 
 echo [INFO] Starting local development server...
