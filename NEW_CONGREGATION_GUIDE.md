@@ -106,6 +106,19 @@ Your app is live at `https://<your-project-id>.web.app`!
 
 ---
 
+## 🔄 Updating to the Latest Version
+
+When new improvements, bug fixes, or features are released on GitHub, update your congregation's installation with one click:
+
+- **Windows**: Double-click `scripts/update-windows.bat`
+- **macOS**: Double-click `scripts/update-mac.command`
+- **Linux**: Run `./scripts/update-unix.sh`
+- **Or via terminal**: `npm run update`
+
+*(The updater automatically pulls the latest code, preserves your `.env` configuration, installs any new packages, and offers to redeploy to Firebase Hosting).*
+
+---
+
 ## 🛡️ Role-Based Permissions Summary
 
 - **Admin / Full Access**: Can manage users, adjust congregation settings, edit/delete data across modules.

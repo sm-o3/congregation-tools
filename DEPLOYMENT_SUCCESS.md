@@ -84,10 +84,16 @@ Once logged in as an administrator, you have access to:
 
 ## 🔧 Local Development & Updating
 
-Run with 1-click using the provided startup scripts:
+**To launch the app (1-click):**
 - **Windows**: Double-click `scripts/start-windows.bat`
 - **Mac**: Double-click `scripts/start-mac.command`
 - **Linux**: Run `./scripts/start-unix.sh`
+
+**To update to the latest code (1-click):**
+- **Windows**: Double-click `scripts/update-windows.bat`
+- **Mac**: Double-click `scripts/update-mac.command`
+- **Linux**: Run `./scripts/update-unix.sh`
+- **Or via terminal**: `npm run update`
 
 Or manually via terminal:
 ```bash

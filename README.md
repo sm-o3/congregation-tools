@@ -27,6 +27,19 @@ If you have downloaded this repository folder:
 - **macOS**: Double-click `scripts/start-mac.command` in Finder.
 - **Linux**: Run `./scripts/start-unix.sh`.
 
+---
+
+## 🔄 1-Click Codebase Updating
+
+When new features or fixes are released on GitHub, update your local installation with one click:
+
+- **Windows**: Double-click `scripts/update-windows.bat`
+- **macOS**: Double-click `scripts/update-mac.command` in Finder
+- **Linux**: Run `./scripts/update-unix.sh`
+- **Or via terminal**: Run `npm run update`
+
+*(Automatically pulls the latest code, updates dependencies, protects your `.env` credentials, and offers to redeploy to Firebase Hosting).*
+
 👉 **For complete 5-minute setup with your own congregation's Firebase backend, see [NEW_CONGREGATION_GUIDE.md](NEW_CONGREGATION_GUIDE.md).**
 
 ## Features
