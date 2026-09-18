@@ -541,6 +541,7 @@ const maxMembers = computed(() => {
 
 // --- EDIT MODE & DRAG-TO-SORT ACTIONS ---
 const startEditMode = () => {
+  if (!authStore.isAdmin) return
   search.value = '' // clear search so full group lists are editable
   savedGroupMembersSnapshot.value = JSON.parse(JSON.stringify(groupMembersMap.value))
   isEditMode.value = true
@@ -624,6 +625,7 @@ const isDragOverCell = (groupId, index) => {
 
 // Save Order to Firestore
 const saveOrder = async () => {
+  if (!authStore.isAdmin) return
   savingOrder.value = true
   try {
     for (const group of groups.value) {

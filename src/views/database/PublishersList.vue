@@ -755,6 +755,7 @@ const loadGroups = async () => {
 }
 
 const openAddDialog = () => {
+  if (!authStore.isAdmin) return
   editMode.value = false
   editedItem.value = { ...defaultItem }
   calculatedAge.value = null
@@ -894,6 +895,7 @@ const exportData = () => {
 }
 
 const triggerFileInput = () => {
+  if (!authStore.isAdmin) return
   if (fileInput.value) {
     fileInput.value.click()
   }
@@ -915,6 +917,7 @@ const parseExcelDateString = (dateStr) => {
 }
 
 const handleFileUpload = async (event) => {
+  if (!authStore.isAdmin) return
   const file = event.target.files[0]
   if (!file) return
   

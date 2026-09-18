@@ -1584,7 +1584,7 @@ const congSuccessMsg = ref(null)
 
 const brothersSortedByFamily = computed(() => {
   return [...publishers.value]
-    .filter(p => p.gender === 'Male' && p.status !== 'Inactive')
+    .filter(p => p.gender === 'Male' && p.status !== 'Inactive' && p.role !== 'Inactive Publisher' && p.role !== 'Un-Baptized Publisher' && p.role !== 'Removed')
     .sort((a, b) => {
       const familyA = (a.family || '').toLowerCase()
       const familyB = (b.family || '').toLowerCase()
