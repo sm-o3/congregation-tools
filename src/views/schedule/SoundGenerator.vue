@@ -1,7 +1,21 @@
 <template>
   <v-card>
-    <v-card-title>Generate Sound Schedule</v-card-title>
+    <v-card-title class="d-flex align-center justify-space-between flex-wrap py-3 px-4">
+      <span>Generate Sound Schedule</span>
+      <v-chip color="primary" variant="tonal" prepend-icon="mdi-calendar-check" size="small">
+        Midweek Meeting: {{ localMidweekDay }}
+      </v-chip>
+    </v-card-title>
     <v-card-text>
+      <v-alert
+        type="info"
+        variant="tonal"
+        density="compact"
+        class="mb-4"
+        icon="mdi-information-outline"
+      >
+        Generating schedule for <strong>Midweek Meeting ({{ localMidweekDay }})</strong> and <strong>Weekend Meeting (Sunday)</strong> based on Congregation Settings.
+      </v-alert>
       <v-row>
         <v-col cols="12" md="4">
           <v-text-field v-model="startDate" label="Start Date" type="date" />
@@ -100,13 +114,44 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { doc, getDoc } from 'firebase/firestore'
+import { db } from '@/config/firebase'
 
 const props = defineProps({
-  publishers: Array
+  publishers: Array,
+  midweekDay: String
 })
 
 const emit = defineEmits(['schedule-generated'])
+
+const localMidweekDay = ref(props.midweekDay || 'Thursday')
+
+watch(() => props.midweekDay, (newVal) => {
+  if (newVal) localMidweekDay.value = newVal
+})
+
+const loadMidweekDay = async () => {
+  if (props.midweekDay) {
+    localMidweekDay.value = props.midweekDay
+    return
+  }
+  try {
+    const snap = await getDoc(doc(db, 'settings', 'meetings'))
+    if (snap.exists() && snap.data().midweekMeetingDay) {
+      localMidweekDay.value = snap.data().midweekMeetingDay
+      return
+    }
+    const snapCong = await getDoc(doc(db, 'settings', 'congregation'))
+    if (snapCong.exists() && snapCong.data().midweekMeetingDay) {
+      localMidweekDay.value = snapCong.data().midweekMeetingDay
+    }
+  } catch (err) {
+    console.error('Error loading midweek day in SoundGenerator:', err)
+  }
+}
+
+onMounted(loadMidweekDay)
 
 const today = new Date()
 const startDate = ref(new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0])
@@ -173,20 +218,25 @@ const generate = () => {
 
   generating.value = true
   try {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const midweekIdx = days.indexOf(localMidweekDay.value)
+    const midweekMeetingIdx = midweekIdx !== -1 ? midweekIdx : 4
+    const weekendMeetingIdx = 0 // Sunday
+
     const start = new Date(startDate.value)
     const end = new Date(endDate.value)
     const scheduleDates = []
     let current = new Date(start)
 
     while (current <= end) {
-      if (current.getDay() === 4 || current.getDay() === 0) { // Thursday or Sunday
+      if (current.getDay() === midweekMeetingIdx || current.getDay() === weekendMeetingIdx) {
         scheduleDates.push(new Date(current))
       }
       current.setDate(current.getDate() + 1)
     }
 
     previewSchedule.value = scheduleDates.map((date, i) => {
-      const isSunday = date.getDay() === 0
+      const isSunday = date.getDay() === weekendMeetingIdx
       const assignedToday = new Set()
 
       const getSafeName = (roleKey) => {

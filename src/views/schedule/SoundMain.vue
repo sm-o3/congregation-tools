@@ -19,6 +19,7 @@
       <v-window-item value="schedule">
         <SoundSchedule 
           :scheduleData="generatedSchedule"
+          :midweek-day="midweekMeetingDay"
           @load-saved="syncPublishers"
         />
       </v-window-item>
@@ -26,6 +27,7 @@
       <v-window-item value="generator">
         <SoundGenerator 
           :publishers="publishers"
+          :midweek-day="midweekMeetingDay"
           @schedule-generated="handleScheduleGenerated"
         />
       </v-window-item>
@@ -42,7 +44,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { collection, getDocs } from 'firebase/firestore'
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore'
 import { db } from '@/config/firebase'
 import SoundSchedule from './SoundSchedule.vue'
 import SoundGenerator from './SoundGenerator.vue'
@@ -51,6 +53,23 @@ import SoundPublishers from './SoundPublishers.vue'
 const tab = ref('schedule')
 const publishers = ref([])
 const generatedSchedule = ref([])
+const midweekMeetingDay = ref('Thursday')
+
+const loadSettings = async () => {
+  try {
+    const snapMeetings = await getDoc(doc(db, 'settings', 'meetings'))
+    if (snapMeetings.exists() && snapMeetings.data().midweekMeetingDay) {
+      midweekMeetingDay.value = snapMeetings.data().midweekMeetingDay
+      return
+    }
+    const snapCong = await getDoc(doc(db, 'settings', 'congregation'))
+    if (snapCong.exists() && snapCong.data().midweekMeetingDay) {
+      midweekMeetingDay.value = snapCong.data().midweekMeetingDay
+    }
+  } catch (error) {
+    console.error('Error loading meeting settings in SoundMain:', error)
+  }
+}
 
 const loadPublishers = async () => {
   try {
@@ -72,5 +91,8 @@ const syncPublishers = () => {
   loadPublishers()
 }
 
-onMounted(loadPublishers)
+onMounted(() => {
+  loadPublishers()
+  loadSettings()
+})
 </script>

@@ -1132,12 +1132,12 @@
     </v-window>
 
     <!-- User Dialogs -->
-    <v-dialog v-model="showUserDialog" max-width="650px">
+    <v-dialog v-model="showUserDialog" max-width="650px" scrollable>
       <v-card class="rounded-xl overflow-hidden">
         <v-card-title class="bg-primary text-white pa-4">
           {{ isEditingUser ? 'Edit User' : 'Add New User' }}
         </v-card-title>
-        <v-card-text class="pa-4">
+        <v-card-text class="pa-4" style="max-height: 75vh; overflow-y: auto;">
           <v-form ref="userFormRef" v-model="isUserFormValid" @submit.prevent="saveUser">
             <v-text-field v-model="userForm.displayName" label="Full Name" variant="outlined" :rules="[v => !!v || 'Name is required']" class="mb-4" />
             <v-text-field v-model="userForm.email" label="Email (Google Account)" variant="outlined" type="email" :rules="[v => !!v || 'Email is required']" :disabled="isEditingUser" class="mb-4" />
@@ -1335,7 +1335,12 @@ const saveSettings = async () => {
   try {
     const oldSettings = { ...settings.value }
     await setDoc(doc(db, 'settings', 'meetings'), settings.value)
-    await setDoc(doc(db, 'settings', 'congregation'), { congregationName: settings.value.congregationName || '' }, { merge: true })
+    await setDoc(doc(db, 'settings', 'congregation'), { 
+      congregationName: settings.value.congregationName || '',
+      midweekMeetingDay: settings.value.midweekMeetingDay || 'Thursday',
+      midweekMeetingTime: settings.value.midweekMeetingTime || '18:30',
+      weekendMeetingTime: settings.value.weekendMeetingTime || '10:30'
+    }, { merge: true })
     if (authStore.setCongregationName) {
       authStore.setCongregationName(settings.value.congregationName || '')
     }
