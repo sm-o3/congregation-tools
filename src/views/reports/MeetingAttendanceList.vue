@@ -94,6 +94,7 @@
               />
               
               <v-btn 
+                v-if="authStore.isAdmin"
                 color="success" 
                 variant="tonal"
                 @click="triggerFileInput"
@@ -143,7 +144,7 @@
                   <v-list-item to="/reports/add-meeting-attendance" prepend-icon="mdi-plus">
                     <v-list-item-title>Add Attendance</v-list-item-title>
                   </v-list-item>
-                  <v-list-item @click="triggerFileInput" prepend-icon="mdi-import">
+                  <v-list-item v-if="authStore.isAdmin" @click="triggerFileInput" prepend-icon="mdi-import">
                     <v-list-item-title>Import Excel</v-list-item-title>
                   </v-list-item>
                   <v-list-item @click="exportData" prepend-icon="mdi-export">
@@ -595,10 +596,12 @@ const exportData = () => {
 }
 
 const triggerFileInput = () => {
+  if (!authStore.isAdmin) return
   if (fileInput.value) fileInput.value.click()
 }
 
 const handleFileUpload = async (event) => {
+  if (!authStore.isAdmin) return
   const file = event.target.files[0]
   if (!file) return
 

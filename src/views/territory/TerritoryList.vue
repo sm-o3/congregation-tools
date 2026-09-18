@@ -578,6 +578,12 @@ const sortedTerritories = computed(() => {
 // Filtered Territories
 const filteredTerritories = computed(() => {
   let list = [...sortedTerritories.value]
+
+  // If Editor is not Territory Assistant (or Territory Servant/Service Overseer/Admin), only show their group's territories
+  if (authStore.isEditor && !authStore.isAdmin && !authStore.isTerritoryAssistant && !authStore.isTerritoryServant && !authStore.isServiceOverseer) {
+    list = list.filter(t => authStore.userGroupId && t.groupId === authStore.userGroupId)
+  }
+
   if (territorySearch.value) {
     const q = territorySearch.value.toLowerCase().trim()
     list = list.filter(t => 

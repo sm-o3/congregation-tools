@@ -524,8 +524,12 @@ const publishersWithGroupNames = computed(() => {
   })
   
   // Apply group-based access control
-  if (authStore.isEditor && authStore.userSpiritualRole !== 'Elder') {
-    filtered = filtered.filter(p => !authStore.userGroupId || p.groupId === authStore.userGroupId)
+  if (authStore.isEditor && !authStore.isAdmin) {
+    if (authStore.isPublisher) {
+      filtered = []
+    } else {
+      filtered = filtered.filter(p => authStore.userGroupId && p.groupId === authStore.userGroupId)
+    }
   }
 
   // Apply query parameter filters

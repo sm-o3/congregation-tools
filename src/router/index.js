@@ -39,14 +39,14 @@ const routes = [
         path: '/congregation/publishers',
         name: 'PublishersList',
         component: () => import('@/views/database/PublishersList.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewDatabase' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewPublishersList' }
     },
     { path: '/database/publishers', redirect: '/congregation/publishers' },
     {
         path: '/congregation/groups',
         name: 'Groups',
         component: () => import('@/views/database/Groups.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewDatabase' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewGroups' }
     },
     { path: '/database/groups', redirect: '/congregation/groups' },
     {
@@ -148,7 +148,7 @@ const routes = [
         path: '/territory/overview',
         name: 'TerritoryOverview',
         component: () => import('@/views/territory/Overview.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewTerritory' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewTerritoryOverview' }
     },
     {
         path: '/territory/list',
@@ -160,7 +160,7 @@ const routes = [
         path: '/territory/s13',
         name: 'S13',
         component: () => import('@/views/territory/S13.vue'),
-        meta: { requiresAuth: true, rbacCheck: 'canViewTerritory' }
+        meta: { requiresAuth: true, rbacCheck: 'canViewTerritoryS13' }
     }
 ]
 
@@ -201,11 +201,14 @@ router.beforeEach(async (to, from, next) => {
             // Needs admin but user is not admin
             next('/') // Redirect to home or another safe page
         } else if (to.meta.rbacCheck && !authStore[to.meta.rbacCheck]) {
-            // Check specific RBAC rules (e.g. MS Editor hiding Home/Database)
-            // If they can't view Home, send them to Reports or somewhere they can view
+            // Check specific RBAC rules
             if (to.meta.rbacCheck === 'canViewHome' && !authStore.canViewHome) {
                 if (authStore.canViewReports) next('/reports/overview')
                 else next('/login')
+            } else if (to.path.startsWith('/territory/') && authStore.canViewTerritory) {
+                next('/territory/list')
+            } else if (to.path.startsWith('/congregation/') && authStore.canViewDatabase) {
+                next('/congregation/overview')
             } else {
                 next('/')
             }

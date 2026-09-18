@@ -41,6 +41,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewPublishersList"
           prepend-icon="mdi-account-group" 
           title="Publishers List" 
           to="/congregation/publishers"
@@ -49,6 +50,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewGroups"
           prepend-icon="mdi-account-multiple" 
           title="Groups" 
           to="/congregation/groups"
@@ -217,6 +219,7 @@
         </template>
         
         <v-list-item 
+          v-if="authStore.canViewTerritoryOverview"
           prepend-icon="mdi-map-marker" 
           title="Overview" 
           to="/territory/overview"
@@ -233,6 +236,7 @@
           active-class="nav-item-active"
         />
         <v-list-item 
+          v-if="authStore.canViewTerritoryS13"
           prepend-icon="mdi-file-document-outline" 
           title="S-13" 
           to="/territory/s13"

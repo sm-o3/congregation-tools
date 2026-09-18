@@ -28,6 +28,7 @@
             <!-- Desktop Action Buttons -->
             <div class="d-none d-md-flex align-center ga-2">
               <v-btn 
+                v-if="authStore.isAdmin"
                 color="primary" 
                 @click="openAddDialog"
                 prepend-icon="mdi-plus"
@@ -44,6 +45,7 @@
               />
               
               <v-btn 
+                v-if="authStore.isAdmin"
                 color="success" 
                 variant="tonal"
                 @click="triggerFileInput"
@@ -84,6 +86,7 @@
             <!-- Mobile Actions Menu -->
             <div class="d-flex d-md-none align-center ga-1">
               <v-btn 
+                v-if="authStore.isAdmin"
                 color="primary"
                 size="small"
                 icon
@@ -99,10 +102,10 @@
                   </v-btn>
                 </template>
                 <v-list>
-                  <v-list-item @click="openAddDialog" prepend-icon="mdi-plus">
+                  <v-list-item v-if="authStore.isAdmin" @click="openAddDialog" prepend-icon="mdi-plus">
                     <v-list-item-title>Add Emergency Contact</v-list-item-title>
                   </v-list-item>
-                  <v-list-item @click="triggerFileInput" prepend-icon="mdi-import">
+                  <v-list-item v-if="authStore.isAdmin" @click="triggerFileInput" prepend-icon="mdi-import">
                     <v-list-item-title>Import Excel</v-list-item-title>
                   </v-list-item>
                   <v-list-item @click="exportData" prepend-icon="mdi-export">
@@ -601,8 +604,8 @@ const enrichedContacts = computed(() => {
   })
 
   // Filter based on user RBAC group restriction if applicable
-  if (authStore.isEditor && authStore.userSpiritualRole !== 'Elder') {
-    list = list.filter(item => !authStore.userGroupId || item.groupId === authStore.userGroupId)
+  if (authStore.isEditor && !authStore.isAdmin) {
+    list = list.filter(item => authStore.userGroupId && item.groupId === authStore.userGroupId)
   }
 
   return list
@@ -653,6 +656,7 @@ const onPublisherSelected = (pubId) => {
 }
 
 const openAddDialog = () => {
+  if (!authStore.isAdmin) return
   editMode.value = false
   editedItem.value = { 
     ...defaultItem,
@@ -799,11 +803,13 @@ const exportData = () => {
 }
 
 const triggerFileInput = () => {
+  if (!authStore.isAdmin) return
   if (fileInput.value) fileInput.value.click()
 }
 
 // Import from Excel
 const handleFileUpload = async (event) => {
+  if (!authStore.isAdmin) return
   const file = event.target.files[0]
   if (!file) return
 

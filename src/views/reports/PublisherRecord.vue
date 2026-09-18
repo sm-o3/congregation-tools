@@ -105,7 +105,7 @@
         <!-- Card Header with Edit/Save Button -->
         <div class="s21-header-row d-print-none">
           <div class="s21-header">CONGREGATION'S PUBLISHER RECORD</div>
-          <div class="s21-edit-btn-wrap">
+          <div v-if="authStore.canEditPublisherRecord" class="s21-edit-btn-wrap">
             <v-btn
               v-if="!editMode"
               icon
@@ -561,6 +561,7 @@ const loadPublisherData = async () => {
 
 // --- Edit Mode ---
 const startEdit = () => {
+  if (!authStore.canEditPublisherRecord) return
   if (!selectedPublisher.value) return
   const p = selectedPublisher.value
   editForm.value = {
@@ -595,6 +596,7 @@ const cancelEdit = () => {
 }
 
 const saveRecord = async () => {
+  if (!authStore.canEditPublisherRecord) return
   saving.value = true
   try {
     const pubId = selectedPublisherId.value

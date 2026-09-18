@@ -62,6 +62,11 @@ export const useAuthStore = defineStore('auth', () => {
         return checkRoleMatch(congSettings.value.territoryServantUid, congSettings.value.territoryServant)
     })
 
+    const isTerritoryAssistant = computed(() => {
+        if (!congSettings.value) return false
+        return checkRoleMatch(congSettings.value.territoryAssistantUid, congSettings.value.territoryAssistant)
+    })
+
     // Service Committee: Coordinator + Secretary + Service Overseer
     const isServiceCommittee = computed(() => {
         return isCoordinator.value || isSecretary.value || isServiceOverseer.value
@@ -91,27 +96,60 @@ export const useAuthStore = defineStore('auth', () => {
     const isPublisher = computed(() => userSpiritualRole.value === 'Publisher')
 
     // Territory specific management permission:
-    // "only for service overseer role elder and territory servent elder/MS"
+    // "only for service overseer role elder and territory servent elder/MS and territory assistant"
     const canManageTerritory = computed(() => {
         if (isAdmin.value) return true
         if (isServiceOverseer.value && userSpiritualRole.value === 'Elder') return true
         if (isTerritoryServant.value && (userSpiritualRole.value === 'Elder' || userSpiritualRole.value === 'Ministerial Servant')) return true
+        if (isTerritoryAssistant.value) return true
         return false
     })
 
-    // Access controls based on user request:
-    // "if he Ministrial Servent and given Role is Editor - hide - Home and Database"
-    // "if he is Publisher hide everything except - Reports (Hide Publishers Record in Reports)"
+    // Access controls based on role:
+    // Home: Admin, Editor, Publisher
+    const canViewHome = computed(() => isAdmin.value || isEditor.value || isPublisher.value)
+    
+    // Congregation: Admin and Editor can view Congregation main menu
+    const canViewDatabase = computed(() => isAdmin.value || isEditor.value)
+    
+    // Publishers List: Admin, or Editor who is Ministerial Servant (or other non-publisher editors). Hidden for Editor (Publisher).
+    const canViewPublishersList = computed(() => {
+        if (isAdmin.value) return true
+        if (isEditor.value && isMS.value) return true
+        if (isEditor.value && !isPublisher.value && !isMS.value) return true
+        return false
+    })
 
-    const canViewHome = computed(() => isAdmin.value || (isEditor.value && !isMS.value && !isPublisher.value))
-    const canViewDatabase = computed(() => isAdmin.value || (isEditor.value && !isMS.value && !isPublisher.value))
+    // Groups menu (/congregation/groups): Admin only (hidden for Editor)
+    const canViewGroups = computed(() => isAdmin.value)
+
+    // Reports: Admin, Editor, Publisher, Service Overseer
     const canViewReports = computed(() => isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value)
+    
+    // Publisher Record: View allowed for Admin and Editor. (Edit access is restricted to Admin only)
     const canViewPublisherRecord = computed(() => (isAdmin.value || isEditor.value) && !isPublisher.value)
+    const canEditPublisherRecord = computed(() => isAdmin.value)
+
     const canViewReportAnalyze = computed(() => isAdmin.value || isServiceOverseer.value)
     const canViewSchedule = computed(() => isAdmin.value || isEditor.value)
-    const canViewTerritory = computed(() => isAdmin.value || isEditor.value || isTerritoryServant.value || isServiceOverseer.value)
 
-    const hasAccess = computed(() => isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value || isTerritoryServant.value)
+    // Territory view controls:
+    // Territory main menu: Admin, Editor, Territory Servant, Territory Assistant, Service Overseer
+    const canViewTerritory = computed(() => isAdmin.value || isEditor.value || isTerritoryServant.value || isTerritoryAssistant.value || isServiceOverseer.value)
+    
+    // Territory Overview & S-13: Admin, Service Overseer, Territory Servant, Territory Assistant (hidden for regular Editor)
+    const canViewTerritoryOverview = computed(() => {
+        if (isAdmin.value) return true
+        if (isServiceOverseer.value || isTerritoryServant.value || isTerritoryAssistant.value) return true
+        return false
+    })
+    const canViewTerritoryS13 = computed(() => {
+        if (isAdmin.value) return true
+        if (isServiceOverseer.value || isTerritoryServant.value || isTerritoryAssistant.value) return true
+        return false
+    })
+
+    const hasAccess = computed(() => isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value || isTerritoryServant.value || isTerritoryAssistant.value)
 
     // Actions
     const fetchCongSettings = async () => {
@@ -333,6 +371,7 @@ export const useAuthStore = defineStore('auth', () => {
         isSecretary,
         isServiceOverseer,
         isTerritoryServant,
+        isTerritoryAssistant,
         isServiceCommittee,
         canDelete,
         isEditor,
@@ -343,11 +382,16 @@ export const useAuthStore = defineStore('auth', () => {
         // RBAC View Getters
         canViewHome,
         canViewDatabase,
+        canViewPublishersList,
+        canViewGroups,
         canViewReports,
         canViewPublisherRecord,
+        canEditPublisherRecord,
         canViewReportAnalyze,
         canViewSchedule,
         canViewTerritory,
+        canViewTerritoryOverview,
+        canViewTerritoryS13,
         // Actions
         fetchCongSettings,
         setCongregationName,

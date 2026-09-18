@@ -9,7 +9,7 @@
     <!-- First Row: Total Publishers, Regular Pioneers, Elders, MS -->
     <v-row>
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers()">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers()">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="primary" class="mr-4">mdi-account-group</v-icon>
@@ -23,7 +23,7 @@
       </v-col>
       
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('pioneerType', 'RP')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('pioneerType', 'RP')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="success" class="mr-4">mdi-star</v-icon>
@@ -37,7 +37,7 @@
       </v-col>
       
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('role', 'Elder')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('role', 'Elder')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="deep-purple" class="mr-4">mdi-shield-account</v-icon>
@@ -51,7 +51,7 @@
       </v-col>
       
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('role', 'Ministerial Servant')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('role', 'Ministerial Servant')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="blue" class="mr-4">mdi-account-tie</v-icon>
@@ -68,7 +68,7 @@
     <!-- Second Row: Unbaptized, Groups, Brothers, Sisters -->
     <v-row>
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('role', 'Un-Baptized Publisher')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('role', 'Un-Baptized Publisher')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="warning" class="mr-4">mdi-account</v-icon>
@@ -96,7 +96,7 @@
       </v-col>
       
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('gender', 'Male')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('gender', 'Male')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="blue" class="mr-4">mdi-gender-male</v-icon>
@@ -110,7 +110,7 @@
       </v-col>
       
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('gender', 'Female')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('gender', 'Female')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="pink" class="mr-4">mdi-gender-female</v-icon>
@@ -127,7 +127,7 @@
     <!-- Third Row: Teenagers, Children -->
     <v-row>
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('ageCategory', 'teenager')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('ageCategory', 'teenager')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="teal" class="mr-4">mdi-account-school</v-icon>
@@ -141,7 +141,7 @@
       </v-col>
       
       <v-col cols="12" md="6" lg="3">
-        <v-card hover class="clickable-card" @click="navigateToPublishers('ageCategory', 'child')">
+        <v-card :hover="authStore.isAdmin" :class="{ 'clickable-card': authStore.isAdmin }" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" @click="authStore.isAdmin && navigateToPublishers('ageCategory', 'child')">
           <v-card-text>
             <div class="d-flex align-center">
               <v-icon size="40" color="purple" class="mr-4">mdi-baby-face</v-icon>
@@ -197,11 +197,14 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { collection, getDocs } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 // Navigation function for clickable stats
 const navigateToPublishers = (filterKey, filterValue) => {
+  if (!authStore.isAdmin) return
   if (filterKey && filterValue) {
     router.push({
       name: 'PublishersList',

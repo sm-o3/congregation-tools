@@ -11,7 +11,7 @@
     <!-- Stat Cards (Single Row on Desktop & Mobile) -->
     <v-row class="mb-2">
       <v-col cols="3">
-        <v-card hover class="stat-card" @click="navigateToPublishers()">
+        <v-card :hover="authStore.isAdmin" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" class="stat-card" @click="authStore.isAdmin && navigateToPublishers()">
           <v-card-text class="text-center pa-2 pa-sm-4 pa-md-5">
             <div class="stat-icon-wrap bg-primary mb-2 mb-sm-3">
               <v-icon color="white" class="stat-icon">mdi-account-group</v-icon>
@@ -23,7 +23,7 @@
       </v-col>
       
       <v-col cols="3">
-        <v-card hover class="stat-card" @click="navigateToPublishers('pioneerType', 'RP')">
+        <v-card :hover="authStore.isAdmin" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" class="stat-card" @click="authStore.isAdmin && navigateToPublishers('pioneerType', 'RP')">
           <v-card-text class="text-center pa-2 pa-sm-4 pa-md-5">
             <div class="stat-icon-wrap bg-success mb-2 mb-sm-3">
               <v-icon color="white" class="stat-icon">mdi-star</v-icon>
@@ -35,7 +35,7 @@
       </v-col>
       
       <v-col cols="3">
-        <v-card hover class="stat-card" @click="navigateToPublishers('role', 'Elder')">
+        <v-card :hover="authStore.isAdmin" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" class="stat-card" @click="authStore.isAdmin && navigateToPublishers('role', 'Elder')">
           <v-card-text class="text-center pa-2 pa-sm-4 pa-md-5">
             <div class="stat-icon-wrap bg-secondary mb-2 mb-sm-3">
               <v-icon color="white" class="stat-icon">mdi-shield-account</v-icon>
@@ -47,7 +47,7 @@
       </v-col>
       
       <v-col cols="3">
-        <v-card hover class="stat-card" @click="navigateToPublishers('role', 'Ministerial Servant')">
+        <v-card :hover="authStore.isAdmin" :style="authStore.isAdmin ? 'cursor: pointer;' : 'cursor: default;'" class="stat-card" @click="authStore.isAdmin && navigateToPublishers('role', 'Ministerial Servant')">
           <v-card-text class="text-center pa-2 pa-sm-4 pa-md-5">
             <div class="stat-icon-wrap bg-info mb-2 mb-sm-3">
               <v-icon color="white" class="stat-icon">mdi-account-tie</v-icon>
@@ -182,6 +182,7 @@
               Add Meeting Attendance
             </v-btn>
             <v-btn 
+              v-if="authStore.canViewPublishersList"
               block 
               color="secondary" 
               variant="tonal"
@@ -215,8 +216,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { collection, query, getDocs, where } from 'firebase/firestore'
 import { db } from '@/config/firebase'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const authStore = useAuthStore()
 
 const stats = ref({
   totalPublishers: 0,
@@ -235,6 +238,7 @@ const stats = ref({
 })
 
 const navigateToPublishers = (filterKey, filterValue) => {
+  if (!authStore.isAdmin) return
   if (filterKey && filterValue) {
     router.push({
       name: 'PublishersList',
@@ -289,7 +293,15 @@ const loadStats = async () => {
     )
     
     const reportsSnapshot = await getDocs(reportsQuery)
-    const reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    let reportsList = reportsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+
+    // For Editor with assigned group, filter last month summary to Editor's group only
+    if (authStore.isEditor && authStore.userGroupId) {
+      reportsList = reportsList.filter(r => {
+        const pub = allPubMap.get(r.publisherId)
+        return pub && pub.groupId === authStore.userGroupId
+      })
+    }
 
     // 1. Total Shared across all publishers (78)
     const pubReportingCount = reportsList.filter(r => {
