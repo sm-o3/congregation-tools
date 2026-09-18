@@ -7,14 +7,14 @@
     </v-row>
 
     <v-tabs v-model="activeTab" color="primary" class="mb-6" show-arrows>
-      <v-tab value="overview">Overview</v-tab>
+      <v-tab v-if="!isEditorPublisher" value="overview">Overview</v-tab>
       <v-tab value="schedule">Schedule</v-tab>
       <v-tab v-if="authStore.isAdmin" value="generator">Generator</v-tab>
-      <v-tab value="master">S-99</v-tab>
+      <v-tab v-if="!isEditorPublisher" value="master">S-99</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
-      <v-window-item value="overview">
+      <v-window-item v-if="!isEditorPublisher" value="overview">
         <PublicTalksOverview />
       </v-window-item>
       <v-window-item value="schedule">
@@ -23,7 +23,7 @@
       <v-window-item v-if="authStore.isAdmin" value="generator">
         <ScheduleGenerator @schedule-generated="handleScheduleGenerated" />
       </v-window-item>
-      <v-window-item value="master">
+      <v-window-item v-if="!isEditorPublisher" value="master">
         <MasterListS99 />
       </v-window-item>
     </v-window>
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import PublicTalksOverview from './PublicTalksOverview.vue'
@@ -43,12 +43,31 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
+const isEditorPublisher = computed(() => authStore.isEditor && authStore.isPublisher)
+
 const validTabs = ['overview', 'schedule', 'generator', 'master']
-const initialTab = validTabs.includes(route.query.tab) ? route.query.tab : 'overview'
-const activeTab = ref(initialTab)
+const getInitialTab = () => {
+  const qTab = route.query.tab
+  if (isEditorPublisher.value) {
+    return 'schedule'
+  }
+  return validTabs.includes(qTab) ? qTab : 'overview'
+}
+
+const activeTab = ref(getInitialTab())
 const schedule = ref([])
 
+watch(isEditorPublisher, (isEP) => {
+  if (isEP && (activeTab.value === 'overview' || activeTab.value === 'master')) {
+    activeTab.value = 'schedule'
+  }
+})
+
 watch(() => route.query.tab, (newTab) => {
+  if (isEditorPublisher.value && (newTab === 'overview' || newTab === 'master')) {
+    activeTab.value = 'schedule'
+    return
+  }
   if (newTab && validTabs.includes(newTab) && activeTab.value !== newTab) {
     activeTab.value = newTab
   }

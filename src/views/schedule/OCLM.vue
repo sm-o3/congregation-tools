@@ -8,15 +8,15 @@
 
     <!-- Navigation Tabs -->
     <v-tabs v-model="activeTab" color="primary" class="mb-6" show-arrows>
-      <v-tab value="overview">Overview</v-tab>
+      <v-tab v-if="!isEditorPublisher" value="overview">Overview</v-tab>
       <v-tab value="schedule">Schedule</v-tab>
       <v-tab v-if="authStore.isAdmin" value="generator">Generator</v-tab>
-      <v-tab value="workbooks">Workbooks</v-tab>
+      <v-tab v-if="!isEditorPublisher" value="workbooks">Workbooks</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
       <!-- Tab 1: Overview Placeholder -->
-      <v-window-item value="overview">
+      <v-window-item v-if="!isEditorPublisher" value="overview">
         <v-card variant="outlined" class="rounded-xl pa-8 text-center bg-surface">
           <v-icon size="80" color="primary" class="mb-4">mdi-book-open-variant</v-icon>
           <h2 class="text-h5 font-weight-bold mb-2">OCLM Overview</h2>
@@ -58,7 +58,7 @@
       </v-window-item>
 
       <!-- Tab 4: Workbooks (Active View) -->
-      <v-window-item value="workbooks">
+      <v-window-item v-if="!isEditorPublisher" value="workbooks">
         <!-- Workbooks Header Controls -->
         <v-card class="mb-6 rounded-xl border-thin" elevation="1">
           <v-card-text class="pa-4">
@@ -196,11 +196,18 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
-const activeTab = ref('workbooks')
+const isEditorPublisher = computed(() => authStore.isEditor && authStore.isPublisher)
+const activeTab = ref(isEditorPublisher.value ? 'schedule' : 'workbooks')
+
+watch(isEditorPublisher, (isEP) => {
+  if (isEP && (activeTab.value === 'overview' || activeTab.value === 'workbooks')) {
+    activeTab.value = 'schedule'
+  }
+})
 
 const searchQuery = ref('')
 const importing = ref(false)

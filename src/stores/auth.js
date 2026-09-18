@@ -182,17 +182,13 @@ export const useAuthStore = defineStore('auth', () => {
     // Reports: Admin, Editor, Publisher, Service Overseer
     const canViewReports = computed(() => isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value)
 
-    // Reports -> Overview: Hidden for Editor-Publisher who is an Attendant
+    // Reports -> Overview
     const canViewReportsOverview = computed(() => {
-        if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value && isAttendant.value) return false
         return isAdmin.value || isEditor.value || isPublisher.value || isServiceOverseer.value
     })
 
-    // Reports -> Add Report: Hidden for Editor-Publisher who is an Attendant
+    // Reports -> Add Report
     const canViewAddReport = computed(() => {
-        if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value && isAttendant.value) return false
         return isAdmin.value || isEditor.value
     })
 
@@ -205,10 +201,8 @@ export const useAuthStore = defineStore('auth', () => {
         return isAdmin.value || isEditor.value
     })
 
-    // Reports -> Reports List: Hidden for Editor-Publisher who is an Attendant
+    // Reports -> Reports List
     const canViewReportsList = computed(() => {
-        if (isAdmin.value) return true
-        if (isEditor.value && isPublisher.value && isAttendant.value) return false
         return isAdmin.value || isEditor.value
     })
 

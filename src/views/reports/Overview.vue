@@ -123,7 +123,7 @@
     </v-row>
 
     <!-- Meeting Attendance Summary Table -->
-    <v-row class="mt-6">
+    <v-row class="mt-6" v-if="canViewAttendanceTable">
       <v-col cols="12">
         <div class="d-flex align-center justify-space-between mb-2">
           <h2 class="text-h5 d-flex align-center ga-2">
@@ -427,6 +427,13 @@ import { logActivity } from '@/utils/logging'
 
 const authStore = useAuthStore()
 const router = useRouter()
+
+const canViewAttendanceTable = computed(() => {
+  if (authStore.isEditor && authStore.isPublisher) {
+    return authStore.isAttendant
+  }
+  return true
+})
 
 const monthStatus = ref('open')
 const monthStatusInfo = ref('')
