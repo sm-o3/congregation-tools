@@ -323,6 +323,18 @@
                 </div>
               </template>
 
+              <template v-slot:item.publisherName="{ item }">
+                <v-chip v-if="item.publisherId === 'host_admin' || item.isHostAdmin || item.role === 'admin'" size="small" color="deep-purple" variant="tonal" prepend-icon="mdi-shield-crown" class="font-weight-medium">
+                  Host Admin
+                </v-chip>
+                <span v-else-if="item.publisherName" class="text-body-2 font-weight-medium">
+                  {{ item.publisherName }}
+                </span>
+                <span v-else class="text-caption text-grey">
+                  -
+                </span>
+              </template>
+
               <template v-slot:item.groupName="{ item }">
                 <span class="text-body-2">{{ item.groupName || '-' }}</span>
               </template>
@@ -1140,6 +1152,31 @@
         <v-card-text class="pa-4" style="max-height: 75vh; overflow-y: auto;">
           <v-form ref="userFormRef" v-model="isUserFormValid" @submit.prevent="saveUser">
             <v-text-field v-model="userForm.displayName" label="Full Name" variant="outlined" :rules="[v => !!v || 'Name is required']" class="mb-4" />
+            <v-autocomplete
+              v-model="userForm.publisherId"
+              :items="publisherOptions"
+              item-title="title"
+              item-value="id"
+              label="Publisher"
+              variant="outlined"
+              :rules="[v => !!v || 'Publisher selection is required']"
+              prepend-inner-icon="mdi-account-check"
+              clearable
+              class="mb-4"
+              @update:model-value="onPublisherSelected"
+              hint="User must be a publisher of congregation, except Firebase Admin (Host Admin)"
+              persistent-hint
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props" :subtitle="item.raw.subtitle">
+                  <template v-slot:prepend>
+                    <v-icon :color="item.raw.id === 'host_admin' ? 'deep-purple' : 'primary'">
+                      {{ item.raw.id === 'host_admin' ? 'mdi-shield-crown' : 'mdi-account' }}
+                    </v-icon>
+                  </template>
+                </v-list-item>
+              </template>
+            </v-autocomplete>
             <v-text-field v-model="userForm.email" label="Email (Google Account)" variant="outlined" type="email" :rules="[v => !!v || 'Email is required']" :disabled="isEditingUser" class="mb-4" />
             <v-select v-model="userForm.role" :items="appRoles" label="Access Level" variant="outlined" class="mb-4" />
             <v-select v-model="userForm.spiritualRole" :items="spiritualRoles" label="Spiritual Role" variant="outlined" class="mb-4" />
@@ -1441,7 +1478,7 @@ const savingUser = ref(false)
 const groups = ref([])
 const userFormRef = ref(null)
 const isUserFormValid = ref(false)
-const userForm = ref({ id: null, displayName: '', email: '', role: 'editor', spiritualRole: 'Publisher', groupId: null })
+const userForm = ref({ id: null, displayName: '', email: '', role: 'editor', spiritualRole: 'Publisher', groupId: null, publisherId: null, publisherName: '' })
 
 const appRoles = [
   { title: 'Admin (Full Access)', value: 'admin' },
@@ -1451,6 +1488,7 @@ const appRoles = [
 const spiritualRoles = ['Elder', 'Ministerial Servant', 'Publisher']
 const userHeaders = [
   { title: 'User', key: 'displayName', align: 'start' },
+  { title: 'Publisher', key: 'publisherName' },
   { title: 'Email', key: 'email' },
   { title: 'Access', key: 'role' },
   { title: 'Group', key: 'groupName' },
@@ -1458,23 +1496,104 @@ const userHeaders = [
   { title: 'Status', key: 'status' }
 ]
 
+const publisherOptions = computed(() => {
+  const list = [
+    {
+      id: 'host_admin',
+      name: 'Host Admin',
+      title: 'Host Admin',
+      subtitle: 'Firebase Admin Account',
+      role: 'Admin',
+      isHostAdmin: true
+    }
+  ]
+
+  const activePubs = [...publishers.value]
+    .filter(p => p.role !== 'Removed' && p.status !== 'Removed')
+    .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+    .map(p => {
+      const gName = groups.value.find(g => g.id === p.groupId)?.name
+      const subParts = []
+      if (p.role) subParts.push(p.role)
+      if (gName) subParts.push(`Group: ${gName}`)
+      if (p.family) subParts.push(`Family: ${p.family}`)
+      
+      return {
+        id: p.id,
+        name: p.name,
+        title: p.family ? `${p.name} (${p.family})` : p.name,
+        subtitle: subParts.length > 0 ? subParts.join(' • ') : (p.role || 'Publisher'),
+        role: p.role,
+        groupId: p.groupId
+      }
+    })
+
+  return [...list, ...activePubs]
+})
+
+const onPublisherSelected = (selectedId) => {
+  if (!selectedId) {
+    userForm.value.publisherId = null
+    userForm.value.publisherName = ''
+    return
+  }
+
+  if (selectedId === 'host_admin') {
+    userForm.value.publisherId = 'host_admin'
+    userForm.value.publisherName = 'Host Admin'
+    userForm.value.role = 'admin'
+    if (!userForm.value.displayName) {
+      userForm.value.displayName = 'Host Admin'
+    }
+    return
+  }
+
+  const pub = publishers.value.find(p => p.id === selectedId)
+  if (pub) {
+    userForm.value.publisherId = pub.id
+    userForm.value.publisherName = pub.name
+    // Auto-update display name if empty or default admin name
+    if (!userForm.value.displayName || userForm.value.displayName === 'Host Admin' || userForm.value.displayName === 'Admin User') {
+      userForm.value.displayName = pub.name
+    }
+    // Pre-fill spiritual role if matching
+    if (pub.role && ['Elder', 'Ministerial Servant', 'Publisher'].includes(pub.role)) {
+      userForm.value.spiritualRole = pub.role
+    }
+    // Pre-fill group if publisher has groupId
+    if (pub.groupId) {
+      userForm.value.groupId = pub.groupId
+    }
+  }
+}
+
 const loadUsers = async () => {
   loadingUsers.value = true
   try {
     const groupsSnap = await getDocs(collection(db, 'groups'))
     groups.value = groupsSnap.docs.map(doc => ({ id: doc.id, name: doc.data().name }))
 
-    const snap = await getDocs(collection(db, 'users'))
-    users.value = snap.docs.map(d => {
-      const data = d.data()
-      const groupName = groups.value.find(g => g.id === data.groupId)?.name || null
-      return { id: d.id, groupName, ...data }
-    })
-
     if (publishers.value.length === 0) {
       const pubSnap = await getDocs(collection(db, 'publishers'))
       publishers.value = pubSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }))
     }
+
+    const snap = await getDocs(collection(db, 'users'))
+    users.value = snap.docs.map(d => {
+      const data = d.data()
+      const groupName = groups.value.find(g => g.id === data.groupId)?.name || null
+      let publisherName = data.publisherName || null
+      if (!publisherName) {
+        if (data.publisherId === 'host_admin' || data.isHostAdmin || data.role === 'admin') {
+          publisherName = 'Host Admin'
+        } else if (data.publisherId) {
+          publisherName = publishers.value.find(p => p.id === data.publisherId)?.name || null
+        } else if (data.displayName) {
+          publisherName = publishers.value.find(p => p.name?.trim().toLowerCase() === data.displayName.trim().toLowerCase())?.name || null
+        }
+      }
+      return { id: d.id, groupName, publisherName, ...data }
+    })
   } catch (err) { 
     console.error(err)
     usersError.value = 'Failed to load users.' 
@@ -1484,13 +1603,31 @@ const loadUsers = async () => {
 
 const openAddUserDialog = () => {
   isEditingUser.value = false
-  userForm.value = { id: null, displayName: '', email: '', role: 'editor', spiritualRole: 'Publisher' }
+  userForm.value = { id: null, displayName: '', email: '', role: 'editor', spiritualRole: 'Publisher', groupId: null, publisherId: null, publisherName: '' }
   showUserDialog.value = true
 }
 
 const handleUserRowClick = (e, { item }) => {
   isEditingUser.value = true
   userForm.value = { ...item }
+
+  const isHostAdmin = item.publisherId === 'host_admin' || 
+                      item.isHostAdmin === true || 
+                      (item.role === 'admin' && (!item.publisherId || item.publisherId === 'host_admin'))
+
+  if (isHostAdmin) {
+    userForm.value.publisherId = 'host_admin'
+    userForm.value.publisherName = 'Host Admin'
+  } else if (!userForm.value.publisherId && userForm.value.displayName) {
+    const match = publishers.value.find(p => 
+      p.name && p.name.trim().toLowerCase() === userForm.value.displayName.trim().toLowerCase()
+    )
+    if (match) {
+      userForm.value.publisherId = match.id
+      userForm.value.publisherName = match.name
+    }
+  }
+
   showUserDialog.value = true
 }
 
@@ -1499,7 +1636,22 @@ const saveUser = async () => {
   try {
     const emailLower = userForm.value.email.toLowerCase().trim()
     const docId = userForm.value.id || `user_${Date.now()}`
-    const userData = { ...userForm.value, email: emailLower }
+    
+    let pubName = userForm.value.publisherName
+    if (!pubName) {
+      if (userForm.value.publisherId === 'host_admin') {
+        pubName = 'Host Admin'
+      } else if (userForm.value.publisherId) {
+        pubName = publishers.value.find(p => p.id === userForm.value.publisherId)?.name || ''
+      }
+    }
+
+    const userData = { 
+      ...userForm.value, 
+      email: emailLower,
+      publisherName: pubName,
+      isHostAdmin: userForm.value.publisherId === 'host_admin'
+    }
     const oldUserData = isEditingUser.value ? users.value.find(u => u.id === userForm.value.id) : null
     delete userData.id
     if (!userForm.value.id) userData.createdAt = serverTimestamp()
@@ -1511,7 +1663,10 @@ const saveUser = async () => {
     usersSuccessMsg.value = userForm.value.id ? 'User updated.' : 'User added.'
     showUserDialog.value = false
     await loadUsers()
-  } catch (err) { usersError.value = 'Failed to save user.' }
+  } catch (err) { 
+    console.error(err)
+    usersError.value = 'Failed to save user.' 
+  }
   finally { savingUser.value = false }
 }
 

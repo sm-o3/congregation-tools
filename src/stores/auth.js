@@ -357,8 +357,11 @@ export const useAuthStore = defineStore('auth', () => {
 
                 userRole.value = userData.role
                 userSpiritualRole.value = userData.spiritualRole || 'Publisher' // Default to Publisher if not set
-                userGroupId.value = userData.groupId || null
-                await resolveUserPublisher(userData.displayName || email)
+                if (userData.publisherId) {
+                    userPublisherId.value = userData.publisherId === 'host_admin' ? null : userData.publisherId
+                } else {
+                    await resolveUserPublisher(userData.displayName || email)
+                }
                 return { ...userData, docId }
             } else {
                 // User not in database - unauthorized
