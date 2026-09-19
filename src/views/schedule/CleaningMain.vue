@@ -8,8 +8,8 @@
 
     <v-tabs v-model="activeTab" color="primary" class="mb-6" show-arrows>
       <v-tab value="schedule">Schedule</v-tab>
-      <v-tab v-if="authStore.isAdmin" value="generator">Generator</v-tab>
-      <v-tab v-if="authStore.isAdmin" value="publishers">Select Publishers</v-tab>
+      <v-tab value="generator">Generator</v-tab>
+      <v-tab value="publishers">Select Publishers</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">
@@ -17,7 +17,7 @@
         <CleaningSchedule @refresh="loadData" :schedule-data="schedule" />
       </v-window-item>
       
-      <v-window-item v-if="authStore.isAdmin" value="generator">
+      <v-window-item value="generator">
         <CleaningGenerator 
           :groups="groups" 
           :publishers="publishers" 
@@ -26,7 +26,7 @@
         />
       </v-window-item>
       
-      <v-window-item v-if="authStore.isAdmin" value="publishers">
+      <v-window-item value="publishers">
         <CleaningPublishers 
           :groups="groups" 
           :publishers="publishers" 
@@ -67,8 +67,13 @@ const loadData = async () => {
 
     // Load Meeting Settings
     const settingsSnap = await getDoc(doc(db, 'settings', 'meetings'))
-    if (settingsSnap.exists()) {
-      midweekMeetingDay.value = settingsSnap.data().midweekMeetingDay || 'Thursday'
+    if (settingsSnap.exists() && settingsSnap.data().midweekMeetingDay) {
+      midweekMeetingDay.value = settingsSnap.data().midweekMeetingDay
+    } else {
+      const snapCong = await getDoc(doc(db, 'settings', 'congregation'))
+      if (snapCong.exists() && snapCong.data().midweekMeetingDay) {
+        midweekMeetingDay.value = snapCong.data().midweekMeetingDay
+      }
     }
   } catch (error) {
     console.error('Error loading cleaning data:', error)
